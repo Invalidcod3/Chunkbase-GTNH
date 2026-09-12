@@ -52,6 +52,8 @@ python tools/export-runtime.py --instance "PATH_TO_INSTANCE" --entry rwg.world.C
 
 ## 4. 浏览器转换仍是独立步骤
 
+主世界的群系选择与混合子集已继续完成编译和严格对照，另有初始化目录采集工具，见 [RWG 接入进度](rwg-selection.md)。该阶段尚不是最终地表底图 Provider。
+
 当前未实现任意模组字节码到 Web 的自动编译器。通用提取中间包始终标记 `browserExecutable: false`。不能通过修改该布尔值使其可运行。
 
 已完成一个范围明确的真实字节码转换：从 RWG 中间包选择五个纯数学类，核对 SHA-256，以显式 Java 入口适配器通过 TeaVM 0.15.0 编译成 ES module：
