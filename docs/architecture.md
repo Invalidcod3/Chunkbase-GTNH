@@ -4,7 +4,9 @@
 
 `默认 UI → MapView → Web Worker → 当前维度 Provider → 生物群系 / 结构结果`
 
-UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计主要修改 `index.html`、`style.css` 和外围绑定，不替换地图计算。MapView 使用分块缓存，种子/维度变更后终止旧 Worker，结果带请求代次，避免旧维度标记覆盖新地图。
+UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计主要修改 `index.html`、`style.css` 和外围绑定，不替换地图计算。MapView 使用分块缓存，种子/维度变更后保留同一个 Worker，取消旧请求并清空排队任务，结果带请求代次，避免旧维度结果覆盖新地图，也减少开发期间新旧模块混用。
+
+底图结果携带命名空间 palette，主线程按名称重映射本地索引；缺失名称或非法索引显式报错。失败瓦片不缓存为空白，最多尝试三次，切换世界后清空失败记录。Provider 的第二参数为 `{signal}`，异步计算应响应取消；同步函数只能在返回或主动让出执行权后处理取消，队列在任务间让出执行权。
 
 ## 地图
 
@@ -33,14 +35,18 @@ UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计�
 ```json
 {
   "schemaVersion": 1,
-  "packs": [{
-    "id": "rwg-specific-environment",
-    "apiVersion": 1,
-    "browserExecutable": true,
-    "entry": "./rwg/provider.js",
-    "dimensions": [{"key": "overworld", "capabilities": ["biomes", "structures"]}],
-    "biomes": []
-  }]
+  "packs": [
+    {
+      "id": "rwg-specific-environment",
+      "apiVersion": 1,
+      "browserExecutable": true,
+      "entry": "./rwg/provider.js",
+      "dimensions": [
+        { "key": "overworld", "capabilities": ["biomes", "structures"] }
+      ],
+      "biomes": []
+    }
+  ]
 }
 ```
 
@@ -52,7 +58,7 @@ UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计�
 - `predictStructures({seed, dimension, bounds, config})` → `[{kind, subtype, x, z, certainty, source}]`。
 - `predictResources` 为后续接口名称；当前 UI 尚未调用，不能把声明等同于已显示资源。
 
-`seed` 始终是十进制字符串。bounds 使用左闭右开整数范围，X/Z 单位为方块。命名空间目录在主线程与 Worker 按相同顺序注册。每一 Worker 具有独立 Provider 状态，游戏端全局可变对象不应穿过此边界。
+`seed` 始终是十进制字符串。bounds 使用左闭右开整数范围，X/Z 单位为方块。命名空间目录在主线程与 Worker 分别注册，传输时不依赖两边索引顺序一致。每一 Worker 具有独立 Provider 状态，游戏端全局可变对象不应穿过此边界。
 
 当前只支持覆盖内置维度；新增维度目录和资源 UI 仍需实现。版本未知或目录冲突时必须报错，不退回伪造数据。
 

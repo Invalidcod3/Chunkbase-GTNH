@@ -52,7 +52,20 @@ python tools/export-runtime.py --instance "PATH_TO_INSTANCE" --entry rwg.world.C
 
 ## 4. 浏览器转换仍是独立步骤
 
-当前未实现任意模组字节码到 Web 的自动编译器。中间包始终标记 `browserExecutable: false`。不能通过修改该布尔值使其可运行。
+当前未实现任意模组字节码到 Web 的自动编译器。通用提取中间包始终标记 `browserExecutable: false`。不能通过修改该布尔值使其可运行。
+
+已完成一个范围明确的真实字节码转换：从 RWG 中间包选择五个纯数学类，核对 SHA-256，以显式 Java 入口适配器通过 TeaVM 0.15.0 编译成 ES module：
+
+```sh
+python tools/compile-noise.py --input private-packs/rwg-raw-extraction.zip
+node tools/verify-noise.mjs
+```
+
+需要 JDK 21 和联网下载编译依赖；Maven 分发包核对官方 SHA-512，工具与缓存放在 `.test-work/noise-compiler/`。结果在 `private-packs/rwg-noise-browser/`，不自动加入公开静态包。导出 `setSeed(string)`、`perlin3(x,y,z)`、`simplex3(x,y,z)`、`cell3(x,y,z)`；使用与导出包对应的原始 class 在 JVM 生成对照值，不能用手工翻译版作为唯一对照。
+
+当前输入是 RWG-alpha-1.5.2.jar（SHA-256 `9be5c54b56cf2a08d507a5568dec1537ca6f5e958a2ce9d39e32207870a6bd6f`）。六个种子、五组坐标、三个函数共 90 项验证，60 项完全相等，最大绝对误差 `2.8870999813079834e-8`，通过 `1e-7` 误差限。误差限通过不代表群系边界判定一致，后续必须验证完整采样结果。manifest 明确 `worldBiomeGenerator: false`，不会作为主世界 Provider 安装。
+
+编译接口依据 [TeaVM Maven 配置](https://teavm.org/docs/tooling/maven.html) 与 [JS 模块导出](https://teavm.org/docs/runtime/js-modules.html)。这验证了选定纯数学依赖的转换链路，不代表任意模组已经能够一键转换。
 
 后续需解决入口裁剪、Minecraft/Forge 类适配、反射目标、配置与注册表初始化、资源、数值语义、转译，以及与原 Worker 的差分验证。[TeaVM 官方说明](https://teavm.org/docs/intro/overview.html)明确列出反射、资源、类加载、JNI 的限制，因此采用 TeaVM 也需要实际适配。
 

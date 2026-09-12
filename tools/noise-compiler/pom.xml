@@ -1,0 +1,17 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>local.amidst</groupId><artifactId>rwg-noise-browser</artifactId><version>0.1.0</version>
+  <properties><maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><teavm.version>0.15.0</teavm.version></properties>
+  <dependencies>
+    <dependency><groupId>local.rwg</groupId><artifactId>noise-bytecode</artifactId><version>1</version><scope>system</scope><systemPath>${project.basedir}/noise-input.jar</systemPath></dependency>
+    <dependency><groupId>org.teavm</groupId><artifactId>teavm-classlib</artifactId><version>${teavm.version}</version></dependency>
+    <dependency><groupId>org.teavm</groupId><artifactId>teavm-jso</artifactId><version>${teavm.version}</version></dependency>
+  </dependencies>
+  <build><plugins>
+    <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
+    <plugin><groupId>org.teavm</groupId><artifactId>teavm-maven-plugin</artifactId><version>${teavm.version}</version>
+      <executions><execution><goals><goal>compile</goal></goals><phase>process-classes</phase></execution></executions>
+      <configuration><mainClass>amidst.web.NoiseExports</mainClass><targetType>JAVASCRIPT</targetType><jsModuleType>ES2015</jsModuleType><targetDirectory>${project.build.directory}/browser</targetDirectory><targetFileName>noise.js</targetFileName><minifying>false</minifying><optimizationLevel>ADVANCED</optimizationLevel></configuration>
+    </plugin>
+  </plugins></build>
+</project>

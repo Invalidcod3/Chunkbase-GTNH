@@ -11,6 +11,7 @@ import { parseSeed } from "./engine/random.js";
 import { csv, journeyMap, download } from "./export.js";
 import { defaults, validateConfig } from "./engine/config.js";
 import { readRegistry } from "./engine/packs.js";
+import { WorkerClient } from "./engine/worker-client.js";
 const $ = (id) => document.getElementById(id);
 let config = structuredClone(defaults),
   language = "zh",
@@ -77,37 +78,10 @@ function toast(message) {
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => ($("toast").hidden = true), 5000);
 }
-let worker,
-  nextId = 0;
-const pending = new Map();
-function startWorker() {
-  worker?.terminate();
-  for (const { reject } of pending.values()) reject(new Error("CANCELLED"));
-  pending.clear();
-  worker = new Worker(new URL("./engine/worker.js", import.meta.url), {
-    type: "module",
-  });
-  worker.onmessage = ({ data }) => {
-    const p = pending.get(data.id);
-    if (!p) return;
-    pending.delete(data.id);
-    data.error ? p.reject(new Error(data.error)) : p.resolve(data.result);
-  };
-  worker.onerror = () => {
-    for (const p of pending.values())
-      p.reject(new Error("计算线程失败，请重新载入种子"));
-    pending.clear();
-    toast("计算线程失败，请重新载入种子");
-  };
-}
+const workerClient = new WorkerClient();
 function request(action, query) {
-  const id = ++nextId;
-  return new Promise((resolve, reject) => {
-    pending.set(id, { resolve, reject });
-    worker.postMessage({ id, action, query: { ...query, config } });
-  });
+  return workerClient.request(action, { ...query, config });
 }
-startWorker();
 const view = new MapView($("map-canvas"), {
   request,
   onMove: (point, biome) => {
@@ -197,9 +171,10 @@ function loadWorld() {
   structureRevision++;
   loadedBounds = null;
   applyColors();
-  startWorker();
+  workerClient.reset();
   view.setWorld(seed, dimension);
   $("detail").hidden = true;
+  $("biome-name").textContent = "";
   worldText();
   renderFilters();
 }

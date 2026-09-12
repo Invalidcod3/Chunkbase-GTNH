@@ -17,6 +17,7 @@ export class MapView {
     this.targetScale = 0.25;
     this.tiles = new Map();
     this.pending = new Set();
+    this.failedTiles = new Map();
     this.markers = [];
     this.images = new Map();
     this.generation = 0;
@@ -223,6 +224,7 @@ export class MapView {
     this.generation++;
     this.tiles.clear();
     this.pending.clear();
+    this.failedTiles.clear();
     this.markers = [];
     this.selected = null;
     this.changed();
@@ -250,9 +252,19 @@ export class MapView {
   }
   isFullyLoaded() {
     if (!this.showBiomes) return true;
-    const step = this.step(), size = 128 * step, bounds = this.bounds();
-    for (let z = Math.floor(bounds.minZ / size); z <= Math.floor((bounds.maxZ - 1) / size); z++) {
-      for (let x = Math.floor(bounds.minX / size); x <= Math.floor((bounds.maxX - 1) / size); x++) {
+    const step = this.step(),
+      size = 128 * step,
+      bounds = this.bounds();
+    for (
+      let z = Math.floor(bounds.minZ / size);
+      z <= Math.floor((bounds.maxZ - 1) / size);
+      z++
+    ) {
+      for (
+        let x = Math.floor(bounds.minX / size);
+        x <= Math.floor((bounds.maxX - 1) / size);
+        x++
+      ) {
         if (!this.tiles.has(`${step}:${x}:${z}`)) return false;
       }
     }
@@ -276,7 +288,13 @@ export class MapView {
         tx++
       ) {
         const key = `${step}:${tx}:${tz}`;
-        if (!this.tiles.has(key) && !this.pending.has(key))
+        const failure = this.failedTiles.get(key);
+        if (
+          !this.tiles.has(key) &&
+          !this.pending.has(key) &&
+          (!failure ||
+            (failure.attempts < 3 && Date.now() >= failure.retryAfter))
+        )
           todo.push({ tx, tz, key });
       }
     todo.sort(
@@ -317,6 +335,7 @@ export class MapView {
             c.putImageData(pixels, 0, 0);
           }
           this.tiles.set(key, { image, data, tx, tz, step });
+          this.failedTiles.delete(key);
           const screenTile = 128 * step * this.scale,
             capacity = Math.max(
               256,
@@ -333,7 +352,17 @@ export class MapView {
         })
         .catch((error) => {
           if (generation === this.generation) {
-            this.tiles.set(key, { image: null, tx, tz, step });
+            if (error.message === "CANCELLED") return;
+            const attempts = (this.failedTiles.get(key)?.attempts || 0) + 1;
+            const delay = 250 * 2 ** attempts;
+            this.failedTiles.set(key, {
+              attempts,
+              retryAfter: Date.now() + delay,
+            });
+            if (attempts < 3)
+              setTimeout(() => {
+                if (generation === this.generation) this.dirty = true;
+              }, delay);
             this.onError?.(error);
           }
         })
