@@ -1,0 +1,13 @@
+{
+  "name": "amidst-gtnh-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "check": "node tools/check.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build": "node tools/build.mjs"
+  }
+}

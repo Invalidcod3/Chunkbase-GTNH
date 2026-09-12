@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Amidst GTNH · 种子地图</title>
+    <meta
+      name="description"
+      content="在浏览器中预览 GTNH 种子、查找结构并导出坐标。"
+    />
+    <link rel="icon" href="./assets/amidst-32x32.png" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <a class="brand" href="./"
+        ><img src="./assets/amidst-32x32.png" width="28" height="28" alt="" /><b
+          >Amidst <span>GTNH</span></b
+        ><small>WEB</small></a
+      >
+      <form id="seed-form" class="seed-control">
+        <label for="seed" data-i18n="seed">种子</label
+        ><input
+          id="seed"
+          name="seed"
+          value="-4172144997902289642"
+          inputmode="text"
+          spellcheck="false"
+          autocomplete="off"
+          required
+          aria-label="64 位世界种子"
+        /><button type="submit" data-i18n="load">载入</button
+        ><button
+          type="button"
+          id="random"
+          title="随机种子"
+          aria-label="随机种子"
+        >
+          ⚄
+        </button>
+      </form>
+      <label class="dimension-control"
+        ><span data-i18n="dimension">维度</span
+        ><select id="dimension"></select
+      ></label>
+      <div class="toolbar-actions">
+        <button id="export-open" data-i18n="export">导出</button
+        ><button id="settings-open" data-i18n="settings">设置</button
+        ><button id="about-open" data-i18n="about">来源</button
+        ><button id="language" aria-label="切换语言">EN</button>
+      </div>
+    </header>
+    <main id="map" aria-label="地图预览">
+      <canvas
+        id="map-canvas"
+        tabindex="0"
+        aria-label="地图，可用方向键移动，加减键缩放"
+      ></canvas>
+      <div class="map-top">
+        <section class="map-panel map-heading">
+          <strong id="map-title">末地</strong
+          ><span id="mode-note">按全新末地预测</span>
+        </section>
+        <div id="progress" role="status" class="map-panel" hidden>计算中…</div>
+      </div>
+      <aside class="map-panel layers">
+        <details open>
+          <summary data-i18n="layers">图层</summary>
+          <label
+            ><input type="checkbox" id="show-biomes" checked /><span
+              data-i18n="biomes"
+              >生物群系</span
+            ></label
+          ><label
+            ><input type="checkbox" id="show-structures" checked /><span
+              data-i18n="structures"
+              >结构</span
+            ></label
+          >
+          <div id="kind-filters"></div>
+          <label
+            ><input type="checkbox" id="show-grid" /><span data-i18n="grid"
+              >区块网格</span
+            ></label
+          >
+          <hr />
+          <p class="muted" id="resource-status">矿脉与流体预测待接入</p>
+        </details>
+      </aside>
+      <section id="detail" class="map-panel detail" hidden>
+        <button id="detail-close" class="close" aria-label="关闭详情">×</button
+        ><strong id="detail-title"></strong>
+        <div id="detail-content"></div>
+        <button id="copy-coordinates" data-i18n="copy">复制坐标</button>
+      </section>
+      <div id="no-map" class="map-panel no-map" hidden>
+        <strong data-i18n="unavailable">此维度底图尚未接入</strong>
+        <p id="no-map-note"></p>
+        <button id="view-end" data-i18n="viewEnd">查看末地地图</button>
+      </div>
+      <div class="zoom-controls map-panel">
+        <button id="zoom-in" aria-label="放大">+</button
+        ><button id="zoom-out" aria-label="缩小">−</button
+        ><button id="home" title="回到原点" aria-label="回到原点">⌖</button>
+      </div>
+      <div class="map-bottom">
+        <div class="map-panel coordinates">
+          <output id="coordinates">X: 0 · Z: 0</output
+          ><span id="biome-name"></span>
+        </div>
+        <div id="scale" class="scale">
+          <span id="scale-label">500 blocks</span>
+        </div>
+      </div>
+    </main>
+    <footer>
+      <form id="goto-form">
+        <span data-i18n="goto">前往</span
+        ><label
+          >X
+          <input
+            id="goto-x"
+            type="number"
+            min="-29999000"
+            max="29999000"
+            value="0"
+            required /></label
+        ><label
+          >Z
+          <input
+            id="goto-z"
+            type="number"
+            min="-29999000"
+            max="29999000"
+            value="0"
+            required /></label
+        ><button data-i18n="go">定位</button>
+      </form>
+      <span id="count">0 个结构</span
+      ><button id="screenshot" data-i18n="screenshot">保存地图 PNG</button
+      ><span class="footer-note" data-i18n="local">本地计算 · 无需登录</span>
+    </footer>
+    <div id="toast" role="status" hidden></div>
+    <dialog id="settings-dialog">
+      <form method="dialog" class="dialog-heading">
+        <h2 data-i18n="settings">设置</h2>
+        <button aria-label="关闭">×</button>
+      </form>
+      <label class="setting-row"
+        ><span data-i18n="inertia">平滑拖动</span
+        ><input id="inertia" type="checkbox" checked /></label
+      ><label class="setting-row"
+        ><span data-i18n="smooth">平滑地图图像</span
+        ><input id="smooth" type="checkbox" /></label
+      ><label class="setting-row"
+        ><span data-i18n="chaos">生成混沌岛</span
+        ><input id="chaos" type="checkbox" checked /></label
+      ><label class="setting-row"
+        ><span data-i18n="separation">混沌岛间距（方块）</span
+        ><input
+          id="chaos-separation"
+          type="number"
+          min="256"
+          max="1000000"
+          value="10000"
+      /></label>
+      <p class="muted" data-i18n="configNote">
+        默认配置不代表你的整合包配置。可导入环境配置文件以校准维度 ID
+        和生成选项。
+      </p>
+      <label class="file-control"
+        ><span data-i18n="importConfig">导入环境配置 JSON</span
+        ><input
+          id="config-file"
+          type="file"
+          accept=".json,application/json" /></label
+      ><button id="config-download" data-i18n="downloadConfig">
+        下载当前配置
+      </button>
+    </dialog>
+    <dialog id="export-dialog">
+      <form method="dialog" class="dialog-heading">
+        <h2 data-i18n="exportTitle">导出当前视野</h2>
+        <button aria-label="关闭">×</button>
+      </form>
+      <p data-i18n="exportNote">
+        仅导出当前维度、视野和筛选条件内的结构；不代表存档中实际生成的结果。
+      </p>
+      <label class="setting-row"
+        ><span data-i18n="limit">最多坐标数</span
+        ><input
+          id="export-limit"
+          type="number"
+          min="1"
+          max="10000"
+          value="1000" /></label
+      ><label class="setting-row"
+        ><span data-i18n="waypointY">JourneyMap 标记高度</span
+        ><input id="waypoint-y" type="number" min="0" max="255" value="64"
+      /></label>
+      <div class="button-row">
+        <button id="export-csv">CSV</button
+        ><button id="export-json">JSON</button
+        ><button id="export-journeymap">JourneyMap ZIP</button
+        ><button id="export-biomes" data-i18n="exportBiomes">
+          生物群系 JSON
+        </button>
+      </div>
+      <p class="muted" data-i18n="exportFoot">
+        按坐标排序。超过上限时截断；高度为手动设置，不是地形高度。
+      </p>
+    </dialog>
+    <dialog id="about-dialog">
+      <form method="dialog" class="dialog-heading">
+        <h2 data-i18n="aboutTitle">来源与支持状态</h2>
+        <button aria-label="关闭">×</button>
+      </form>
+      <p data-i18n="disclaimer">
+        非官方种子预览工具。预测不保证实际生成结果；模组名称及素材归各自权利人所有。
+      </p>
+      <p>
+        <a
+          href="https://github.com/Invalidcod3/Amidst-GTNH/issues"
+          target="_blank"
+          rel="noreferrer"
+          data-i18n="contact"
+          >问题反馈 / 权利人联系</a
+        >
+        · <a href="./NOTICE.md" target="_blank">NOTICE</a> ·
+        <a href="./LICENSE.txt" target="_blank">GPL-3.0</a>
+      </p>
+      <div id="capability-table"></div>
+      <p class="muted" data-i18n="saveFuture">
+        存档分析将在后续版本提供；当前不会读取或上传存档。
+      </p>
+    </dialog>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

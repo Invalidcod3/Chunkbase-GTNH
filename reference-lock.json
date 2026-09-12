@@ -1,0 +1,8 @@
+{
+  "repository":"https://github.com/Invalidcod3/Amidst-GTNH.git",
+  "commit":"c5e09fedf99ee211b8073d38060b048fb4e03179",
+  "snapshotDirectory":"reference/Amidst-GTNH",
+  "snapshotPolicy":"tracked files only; no Git metadata, build outputs or caches",
+  "referenceLicense":"GPL-3.0",
+  "upstreamFilesModified":false
+}

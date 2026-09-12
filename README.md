@@ -1,0 +1,80 @@
+# Amidst GTNH Web
+
+可打包的静态网页开发版。计算在浏览器的 Web Worker 中进行，没有应用后端、外部脚本或 CDN 依赖。导航栏与地图分开，地图沿用 Amidst 的末地配色、图标、鼠标中心缩放和图层交互；后续可根据 Illustrator 设计替换外围界面。
+
+**这还不是完整 Amidst + Worker 的替代品。** 当前支持与未完成部分均在网页“来源”中显示；不会用随机噪声或其他维度冒充未接入的底图。
+
+## 本地运行与打包
+
+需要 Node.js 22 或更新版本，无需安装依赖：
+
+```sh
+node tools/serve.mjs
+node --test tests/*.test.mjs
+node tools/check.mjs
+node tools/build.mjs
+```
+
+预览地址为 `http://127.0.0.1:4173/`。打包结果是 `artifacts/amidst-gtnh-web-static.zip`，将其解压到任意静态 HTTP 服务即可；对应源码包是 `artifacts/amidst-gtnh-web-source.zip`。支持部署在子目录；不支持双击 `index.html` 的 `file://` 方式（模块与 Web Worker 需要 HTTP）。不自动发布。有 npm 的环境也可使用 package.json 中对应的脚本。
+
+## 当前范围
+
+| 能力 | 状态 |
+| --- | --- |
+| 64 位种子、Java Random、负坐标 | 已移植；与 Java 对照 |
+| 末地底图、HEE 岛屿和地牢塔、混沌岛 | 已移植；沿用原 Worker 的全新末地及圆形示意范围 |
+| 主世界要塞、废弃矿井 | 已移植；RWG 村庄的群系校验待接入 |
+| 月球地牢、村庄 | 已移植；保留原预测器特殊的负区块随机数规则 |
+| 火星洞穴、火星及部分 GalaxySpace 地牢 | 已移植；按实际维度配置计算 |
+| 月球、火星、谷神星、土卫二、海卫八单群系底图 | 已接入；火星颜色待运行时目录校准 |
+| 主世界 RWG/BOP、下界、暮色、Io、Pluto 等复杂底图 | 未接入 |
+| 矿脉、地下流体及其他结构预测 | 未接入 |
+| 地图拖动、缩放、网格、过滤、坐标跳转、PNG | 已实现 |
+| 当前视野 CSV、JSON、JourneyMap ZIP、群系 JSON | 已实现；不直接写入游戏 |
+| 完整桌面 UI、所有快捷键、完整图层与浏览器视觉回归 | 尚未达到完整一致 |
+| 存档分析 | 首版明确不实现；保留本地文件适配接口 |
+
+默认环境来自用户指定的 GTNH 2.9.0-beta-3 实例配置。月球 ID 为 28、火星为 29，不能套用旧文档中的负 ID。设置里可以导入新的环境 JSON。
+
+## 生物群系命名空间
+
+Web 数据层使用 `namespace:path`；中文/英文名只用于显示。图像缓冲区使用本次目录中的 `Uint16` 索引，持久化文件携带命名空间 palette，不依赖该临时索引。
+
+1.7.10 的旧 ID 通过「环境 + 维度 + ID」映射，允许不同维度复用同一个数字。实际模组命名空间需要通过环境包明确声明，不能根据显示名称猜测。`amidst:end_void`、`amidst:hee_infested_forest` 等属于本工具的合成预览区域，并非宣称上游注册了这些名字。旧格式环境配置可迁移到 v2 的命名空间色板。
+
+## 验证
+
+`tests/fixtures/reference.json` 的结果来自旧项目原 Java 预测器，覆盖 7 个种子（包括 long 极值和大于 2^53 的值）、正负坐标、拆分查询、末地像素哈希与实际星球维度配置。原始预测算法未改写成 Java 测试副本；测试工具编译参考源码，并仅为配置和结果容器提供环境桩。Space 的纯静态方法由工具从原文件逐字提取。
+
+本地保留参考快照时，可用 JDK 21 重新校验：
+
+```sh
+node tools/verify-reference.mjs
+node tools/build-agent.mjs
+python tests/test_exporter.py
+```
+
+命名空间碰撞、配置迁移、打包 CRC、导出元数据、存档来源隔离、依赖图与 JVM 采集器另有测试。未进行浏览器截图、交互回归或完整 GTNH 运行时验证；不能把数值对照等同于完整视觉验收。
+
+页面提供可选的 WebMCP 地图读取/定位入口，仅在浏览器支持时注册；本次没有可用的 WebMCP 验证上下文，因此未声称通过该扩展的端到端验证。
+
+## 导出工具与后续接入
+
+见 [导出工具说明](docs/runtime-export.md) 和 [接口约定](docs/architecture.md)。当前导出器能从真实实例中提取字节码、保守依赖闭包、方法调用边及缺失项；JVM 采集器能观察加载到 JVM 的字节码。
+
+**中间包仍不能直接在浏览器执行。** RWG 初始化、Minecraft/Forge 适配、注册表与资源声明、浏览器编译和完整环境对照仍待完成。TeaVM 等工具限制反射、类加载等行为，不能把整理过的 JAR 直接视作转换成功。
+
+## 目录
+
+- `dist/`：可独立托管的前端源文件。
+- `dist/engine/`：计算、命名空间目录、环境与扩展接口。
+- `dist/map.js`：地图相机、分块绘图、缩放与标记。
+- `dist/app.js`、`style.css`、`index.html`：可替换的外围界面。
+- `tools/`：本地运行、校验、打包、参考对照和环境导出。
+- `reference/Amidst-GTNH/`：旧项目已跟踪文件快照，被 Git 忽略。
+- `private-packs/`：实际环境检查及字节码中间包，被 Git 忽略。
+- `artifacts/`：打包结果与采集器，被 Git 忽略。
+
+本项目有独立 `.git`，当前放在原工作树下的 `Amidst-GTNH-Web/` 目录。未改变原仓库跟踪的文件、原分支或主仓库。参考快照不包含旧 Git 元数据、构建缓存和未跟踪产物。
+
+代码许可和素材来源见 [NOTICE](dist/NOTICE.md)。

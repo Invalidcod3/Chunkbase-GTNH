@@ -1,0 +1,8 @@
+reference/
+artifacts/
+private-packs/
+.test-work/
+*.log
+__pycache__/
+*.pyc
+.DS_Store

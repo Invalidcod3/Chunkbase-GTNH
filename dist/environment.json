@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 2,
+  "chaosEnabled": true,
+  "chaosSeparation": 10000,
+  "moonVillagesEnabled": true,
+  "mineshaftsEnabled": true,
+  "dimensionIds": {
+    "overworld": 0,
+    "nether": -1,
+    "end": 1,
+    "twilight": 7,
+    "moon": 28,
+    "mars": 29,
+    "ceres": 42,
+    "io": 36,
+    "enceladus": 41,
+    "proteus": 47,
+    "pluto": 49
+  },
+  "biomeColors": {
+    "amidst:ceres_preview": "#788088",
+    "amidst:enceladus_preview": "#6f777f",
+    "amidst:proteus_preview": "#737b83"
+  }
+}
