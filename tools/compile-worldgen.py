@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import zipfile
+import importlib.util
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,9 +16,9 @@ def run(args, **kwargs):
     return subprocess.run([str(a) for a in args], check=True, **kwargs)
 
 
-def compile_worldgen(archive):
+def compile_worldgen(archive, adapter_profile=None, runtime_profile=None):
     cache = ROOT / '.test-work/noise-compiler'
-    work = ROOT / '.test-work/worldgen-compiler'
+    work = ROOT / ('.test-work/terrain-compiler' if runtime_profile else '.test-work/worldgen-compiler')
     work.mkdir(parents=True, exist_ok=True)
     asm = [cache / f'repository/org/ow2/asm/{name}/9.8/{name}-9.8.jar' for name in ['asm', 'asm-tree']]
     if not all(p.is_file() for p in asm):
@@ -36,7 +37,7 @@ def compile_worldgen(archive):
             hashes[cls] = digest
             jar.writestr(name[8:], data)
     # Deliberately pin the two field-layout adapters to verified inputs.
-    expected = json.loads((ROOT/'tools/worldgen-compiler/profile.json').read_text('utf-8'))
+    expected = json.loads((Path(adapter_profile) if adapter_profile else ROOT/'tools/worldgen-compiler/profile.json').read_text('utf-8'))
     for cls, digest in expected['inputClasses'].items():
         if hashes.get(cls) != digest:
             raise ValueError('Unsupported worldgen class version: ' + cls)
@@ -45,11 +46,53 @@ def compile_worldgen(archive):
     slicer.mkdir(exist_ok=True)
     run(['javac', '-cp', cp, '-d', slicer, ROOT/'tools/worldgen-compiler/Slice.java'])
     java = ['java', '-cp', str(slicer)+os.pathsep+cp, 'Slice']
-    run(java+['slice', work/'input.jar', work/'selection-input.jar'])
+    run(java+['terrain' if runtime_profile else 'slice', work/'input.jar', work/'selection-input.jar'])
     src = work/'src/main/java'
     src.mkdir(parents=True, exist_ok=True)
     for path in (ROOT/'tools/worldgen-compiler/src').glob('*.java'):
         shutil.copyfile(path, src/path.name)
+    profile = json.loads(Path(runtime_profile).read_text('utf-8')) if runtime_profile else None
+    if profile:
+        surface_inputs = json.loads((ROOT/'tools/worldgen-compiler/surface-adapter-profile.json').read_text('utf-8'))['inputClasses']
+        for cls, digest in surface_inputs.items():
+            if hashes.get(cls) != digest:
+                raise ValueError('Surface adapter needs review for changed runtime class: '+cls)
+        for node in profile['objects']:
+            cls = node['class'].replace('.', '/')
+            if cls.startswith(('rwg/surface/', 'rwg/biomes/realistic/', 'rwg/support/RealisticBiomeSupport')) and cls not in surface_inputs:
+                raise ValueError('Unreviewed realistic biome or surface: '+cls)
+        for path in (ROOT/'tools/worldgen-compiler/fast').glob('*.java'):
+            shutil.copyfile(path, src/path.name)
+        if profile['observedManagerSha256'] != hashes['rwg/world/ChunkManagerRealistic']:
+            raise ValueError('Runtime profile does not match compiled manager')
+        spec = importlib.util.spec_from_file_location('terrain_profile', ROOT/'tools/terrain-profile.py')
+        adapter = importlib.util.module_from_spec(spec); spec.loader.exec_module(adapter)
+        adapter.generate(profile, work/'selection-input.jar', src/'RuntimeObjects.java')
+        base = (src/'RealisticBiomeBase.java').read_text('utf-8').replace('public final class', 'public class').replace('public final int biomeID;', 'public int biomeID;\n    public RealisticBiomeBase() {}').replace('return 0;', 'return 63;')
+        (src/'RealisticBiomeBase.java').write_text(base, 'utf-8')
+        entry = (src/'BiomeExports.java').read_text('utf-8')
+        entry = entry.replace('Arrays.fill(RealisticBiomeBase.REGISTRY, null);', 'Arrays.fill(RealisticBiomeBase.REGISTRY, null); RuntimeObjects.install();')
+        entry = entry.replace('manager = m; generator = g;', 'manager = m; generator = g; fast = new FastKernel(m);')
+        fragment = (ROOT/'tools/worldgen-compiler/TerrainMethods.java.fragment').read_text('utf-8')
+        entry = entry.replace('    public static void main(String[] arguments) {', fragment+'\n    public static void main(String[] arguments) {')
+        start = entry.index('    public static void main(String[] arguments) {')
+        # JVM oracle uses this exact captured profile, before browser float lowering.
+        groups = ','.join('new int[]{'+','.join(map(str,profile['groups'][g]))+'}' for g in ['snow','cold','hot','wet','small'])
+        entry = entry[:start]+'''    public static void main(String[] args) {
+        boolean first=true; System.out.print("[");
+        for(String seed:new String[]{"0","-1","9007199254740993"}) {
+            configure(seed,"'''+profile['noise']+'",'+groups+''');
+            for(int[] p:new int[][]{{0,0},{-1,-1},{1038,-1250},{-113,97},{1001,-2049}}) {
+                if(!first)System.out.print(",");first=false;
+                int[] ids=referenceFinalChunk(p[0],p[1]);
+                System.out.print("{\\"seed\\":\\""+seed+"\\",\\"chunk\\":"+Arrays.toString(p)+",\\"ids\\":"+Arrays.toString(ids)+",\\"heights\\":"+Arrays.toString(chunkHeights())+"}");
+            }
+        }
+        System.out.println("]");
+    }
+}
+'''
+        (src/'BiomeExports.java').write_text(entry, 'utf-8')
     pom = (ROOT/'tools/noise-compiler/pom.xml').read_text('utf-8')
     pom = pom.replace('rwg-noise-browser', 'rwg-selection-browser').replace('noise-input.jar', 'selection-input.jar').replace('amidst.web.NoiseExports','amidst.web.BiomeExports').replace('noise.js','selection.js')
     (work/'pom.xml').write_text(pom,'utf-8')
@@ -64,7 +107,7 @@ def compile_worldgen(archive):
     shutil.copyfile(work/'rounded-input.jar', work/'selection-input.jar')
     run(java+['round-directory', work/'target/classes'])
     run(maven+['org.teavm:teavm-maven-plugin:0.15.0:compile'], cwd=work)
-    output = ROOT/'private-packs/rwg-selection-browser'
+    output = ROOT/('private-packs/rwg-terrain-browser' if profile else 'private-packs/rwg-selection-browser')
     output.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(work/'target/browser/selection.js', output/'selection.js')
     (output/'reference.json').write_text(json.dumps(fixtures),'utf-8')
@@ -75,11 +118,19 @@ def compile_worldgen(archive):
               'runtimeProfile':'required; validation uses controlled identity tables',
               'excluded':['actual registry initialization','terrain heights','river biome replacement','surface painters','map generators'],
               'adapters':['explicit initialized manager/generator fields','long-key cache','coordinate packing','biome identity; discarded terrain callback returns zero']}
+    if profile:
+        report.update(stage='terrain-and-surface-calibration', runtimeProfileSha256=hashlib.sha256(Path(runtime_profile).read_bytes()).hexdigest(), inputClasses=hashes,
+                      excluded=['map generators','unverified surface effects'],
+                      adapters=['captured initialized terrain objects','long-key cache','coordinate packing','river assignment','SurfaceDuneValley biome boundary'])
+        shutil.copyfile(runtime_profile, output/'profile.json')
     (output/'manifest.json').write_text(json.dumps(report,indent=2),'utf-8')
-    print('Compiled selection slice. Run node tools/verify-worldgen.mjs before use.')
+    print('Compiled terrain preview; run verify-terrain.mjs and live calibration before use.' if profile else 'Compiled selection slice. Run node tools/verify-worldgen.mjs before use.')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--input',required=True)
-    compile_worldgen(Path(parser.parse_args().input))
+    parser.add_argument('--adapter-profile')
+    parser.add_argument('--runtime-profile')
+    args=parser.parse_args()
+    compile_worldgen(Path(args.input),args.adapter_profile,args.runtime_profile)

@@ -31,11 +31,11 @@ def collect(root, probe=False):
         try:
             with socket.create_connection(('127.0.0.1',port),timeout=3) as connection:
                 connection.settimeout(15)
-                connection.sendall((json.dumps({'command':'hello','token':token})+'\n').encode())
+                connection.sendall((json.dumps({'protocol':21,'command':'hello','token':token})+'\n').encode())
                 data=connection.makefile('rb').readline(16*1024*1024)
                 hello=json.loads(data)
                 if isinstance(hello,dict):hello.pop('token',None)
-                report['worker']={'available':True,'hello':hello}
+                report['worker']={'available':isinstance(hello,dict) and hello.get('ok') is True,'hello':hello}
         except (OSError,ValueError) as error:
             report['worker']={'available':False,'reason':type(error).__name__}
     return report

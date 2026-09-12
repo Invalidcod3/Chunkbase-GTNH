@@ -56,6 +56,10 @@ public final class BiomeExports {
     @JSExport public static int rawBiome(int x, int z) { ready(); return manager.getBiomeDataAt(x,z).biomeID; }
     @JSExport public static float riverStrength(int x, int z) { ready(); return manager.getRiverStrength(x,z); }
     @JSExport public static float oceanValue(int x, int z) { ready(); return manager.getOceanValue(x,z); }
+    @JSExport public static boolean riverAt(int x,int z) {
+        ready();float strength=-manager.getRiverStrength(x,z);
+        return strength>0.05F && strength+manager.perlin.noise2(x/10.0F,z/10.0F)*0.15F>0.8F;
+    }
     @JSExport public static int[] blendedChunk(int cx, int cz) {
         ready();
         if (cx < -1874999 || cx > 1874999 || cz < -1874999 || cz > 1874999) throw new IllegalArgumentException("Chunk outside world bounds");

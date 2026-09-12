@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import {readFile,writeFile} from "node:fs/promises";
+const base=new URL("../private-packs/rwg-local-preview/",import.meta.url);
+const {biomeRegistry}=await import(new URL("engine/catalog.js",base));
+const registry=JSON.parse(await readFile(new URL("packs/registry.json",base),"utf8"));
+for(const b of registry.packs[0].biomes)biomeRegistry.register(b);
+const {provider}=await import(new URL("packs/rwg/provider.js",base));
+const actual=await provider.sampleBiomes({seed:"9007199254740993",dimension:"overworld",x:-35,z:-17,width:32,height:32,step:4});
+const expected=JSON.parse(await readFile(new URL("../runtime-session/worker-strided.json",base),"utf8"));
+const ids=Array.from(actual,index=>biomeRegistry.at(index).legacy[0].id);
+assert.deepEqual(ids,expected.ids,"actual preview provider at negative coordinates with sparse samples");
+const query={seed:"0",dimension:"overworld",x:1536,z:0,width:128,height:128,step:4};
+let start=performance.now();const first=await provider.sampleBiomes(query);const coldMs=Math.round(performance.now()-start);
+start=performance.now();const cached=await provider.sampleBiomes(query);const cachedMs=Math.round(performance.now()-start);
+assert.deepEqual(cached,first);
+const result={exactStridedPixels:ids.length,tilePixels:first.length,coldMs,cachedMs};
+await writeFile(new URL("../runtime-session/preview-validation.json",base),JSON.stringify(result,null,2));
+console.log(JSON.stringify(result));

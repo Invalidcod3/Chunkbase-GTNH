@@ -52,7 +52,7 @@ python tools/export-runtime.py --instance "PATH_TO_INSTANCE" --entry rwg.world.C
 
 ## 4. 浏览器转换仍是独立步骤
 
-主世界的群系选择与混合子集已继续完成编译和严格对照，另有初始化目录采集工具，见 [RWG 接入进度](rwg-selection.md)。该阶段尚不是最终地表底图 Provider。
+主世界已继续完成实际目录、地形、河流和沙丘地表适配，并接到私有本地静态预览，见 [RWG 接入进度](rwg-selection.md)。校准包与早期纯选择/噪声子集分开保存，默认分发包不收录实际环境函数。
 
 当前未实现任意模组字节码到 Web 的自动编译器。通用提取中间包始终标记 `browserExecutable: false`。不能通过修改该布尔值使其可运行。
 

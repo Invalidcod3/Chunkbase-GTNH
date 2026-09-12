@@ -15,8 +15,15 @@ import org.objectweb.asm.*;
  */
 public final class RuntimeProfileAgent {
     private static Path output;
+    private static String boundary = "constructor return; later mutations/transformers are not certified";
     private static final Set<String> seen = Collections.newSetFromMap(new ConcurrentHashMap<String,Boolean>());
     private static final Map<ClassLoader,String> hashes = new ConcurrentHashMap<>();
+    public static void captureExisting(Object manager, Path directory, byte[] observedBytes) throws Exception {
+        output=directory;Files.createDirectories(output);
+        boundary="existing Worker tick snapshot; see capture-result.json for bytecode observation boundary";
+        if(observedBytes!=null)hashes.put(manager.getClass().getClassLoader(),hash(observedBytes));
+        if(!captureProfile(manager))throw new IllegalStateException("Existing manager is not fully initialized");
+    }
     public static void premain(String directory, Instrumentation instrumentation) throws Exception {
         if (directory == null || directory.trim().isEmpty()) throw new IllegalArgumentException("Profile output directory required");
         output = Paths.get(directory).toAbsolutePath().normalize(); Files.createDirectories(output);
@@ -67,23 +74,31 @@ public final class RuntimeProfileAgent {
     }
     public static void capture(Object manager) {
         try {
+            captureProfile(manager);
+        } catch(Throwable error) {
+            System.err.println("[Amidst profile] Unable to capture initialized profile: " + error.getClass().getSimpleName());
+        }
+    }
+    private static boolean captureProfile(Object manager) throws Exception {
             Object noise=field(manager,"perlin");
-            if(noise==null) return; // Base constructor has not initialized the manager yet.
+            if(noise==null) return false; // Base constructor has not initialized the manager yet.
             String implementation=noise.getClass().getName(), mode;
             if(implementation.equals("rwg.util.PerlinNoise")) mode="perlin";
             else if(implementation.equals("rwg.util.OpenSimplexNoise")) mode="open-simplex";
             else if(implementation.equals("rwg.util.NoiseGeneratorWrapper")) mode=Boolean.TRUE.equals(field(noise,"useOpenSimplex")) ? "wrapped-open-simplex" : "wrapped-perlin";
             else throw new IllegalArgumentException("Unknown noise implementation");
             Map<String,Object> groups=new LinkedHashMap<>(), biomes=new TreeMap<>();
+            Snapshot graph=new Snapshot();
             for(String group:Arrays.asList("snow","cold","hot","wet","small")) {
                 List<?> values=(List<?>)field(manager,"biomes_"+group);
-                if(values==null) return;
+                if(values==null) return false;
                 List<Integer> ids=new ArrayList<>();
                 for(Object value:values) {
                     int id=((Number)field(value,"biomeID")).intValue(); ids.add(id);
                     Map<String,Object> item=new LinkedHashMap<>();
                     item.put("id",id);item.put("class",value.getClass().getName());
                     item.put("base",biome(field(value,"baseBiome"))); item.put("river",biome(field(value,"riverBiome")));
+                    item.put("object",graph.value(value));
                     String key=String.valueOf(id);
                     Object previous=biomes.put(key,item);
                     if(previous!=null && !json(previous).equals(json(item))) throw new IllegalStateException("Conflicting realistic ID");
@@ -96,24 +111,55 @@ public final class RuntimeProfileAgent {
             profile.put("managerClass",manager.getClass().getName());
             profile.put("observedManagerSha256",hashes.get(manager.getClass().getClassLoader()));
             profile.put("noise",mode);profile.put("groups",groups);profile.put("biomes",new ArrayList<>(biomes.values()));
+            profile.put("objects",graph.nodes);
             profile.put("wetEnabled",field(manager,"wetEnabled"));profile.put("smallEnabled",field(manager,"smallEnabled"));
-            profile.put("captureBoundary","constructor return; later mutations/transformers are not certified");
+            profile.put("captureBoundary",boundary);
             profile.put("finalSurfaceReady",false);
             byte[] bytes=json(profile).getBytes(StandardCharsets.UTF_8);
             String digest=hash(bytes);
-            if(!seen.add(digest)) return;
+            if(seen.contains(digest)) return true;
             Path target=output.resolve(digest+".json");
             try { Files.write(target,bytes,StandardOpenOption.CREATE_NEW); }
             catch(FileAlreadyExistsException existing) { }
+            seen.add(digest);
             System.out.println("[Amidst profile] Captured RWG selection registry " + digest);
-        } catch(Throwable error) {
-            System.err.println("[Amidst profile] Unable to capture initialized profile: " + error.getClass().getSimpleName());
+            return true;
+    }
+    /** Bounded object graph of RWG configuration. Never follows world/save objects. */
+    private static final class Snapshot {
+        final IdentityHashMap<Object,Integer> seen=new IdentityHashMap<>();
+        final List<Map<String,Object>> nodes=new ArrayList<>();
+        Object value(Object object) throws Exception {
+            if(object==null || object instanceof String || object instanceof Number || object instanceof Boolean)return object;
+            if(object instanceof Character)return (int)((Character)object).charValue();
+            if(object.getClass().isEnum())return ((Enum<?>)object).name();
+            if(object.getClass().isArray()){
+                int length=Array.getLength(object);if(length>4096)throw new IllegalStateException("Configuration array too large");
+                List<Object> values=new ArrayList<>();for(int i=0;i<length;i++)values.add(value(Array.get(object,i)));return values;
+            }
+            String type=object.getClass().getName();
+            if(!type.startsWith("rwg.")) {
+                Map<String,Object> external=new LinkedHashMap<>();external.put("externalClass",type);
+                if(type.startsWith("net.minecraft.world.biome.") || type.startsWith("biomesoplenty.common.biome."))external.put("biome",biome(object));
+                return external;
+            }
+            Integer id=seen.get(object);
+            if(id!=null)return Collections.singletonMap("ref",id);
+            if(nodes.size()>=4096)throw new IllegalStateException("RWG object graph too large");
+            id=nodes.size();seen.put(object,id);
+            Map<String,Object> node=new LinkedHashMap<>(),values=new LinkedHashMap<>();nodes.add(node);
+            node.put("class",type);node.put("fields",values);
+            for(Class<?> current=object.getClass();current!=null&&current.getName().startsWith("rwg.");current=current.getSuperclass()){
+                Field[] fields=current.getDeclaredFields();Arrays.sort(fields,new Comparator<Field>(){public int compare(Field a,Field b){return a.getName().compareTo(b.getName());}});
+                for(Field f:fields)if(!Modifier.isStatic(f.getModifiers())){f.setAccessible(true);values.put(current.getName()+"#"+f.getName(),value(f.get(object)));}
+            }
+            return Collections.singletonMap("ref",id);
         }
     }
     private static String hash(byte[] bytes) throws Exception {
         StringBuilder s=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(bytes))s.append(String.format("%02x",b&255));return s.toString();
     }
-    private static String json(Object value) {
+    static String json(Object value) {
         if(value==null)return "null";
         if(value instanceof Number || value instanceof Boolean)return value.toString();
         if(value instanceof Map) {

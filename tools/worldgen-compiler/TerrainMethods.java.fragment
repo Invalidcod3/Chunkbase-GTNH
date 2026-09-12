@@ -1,0 +1,49 @@
+    @JSExport public static float[] chunkHeights() {
+        ready(); float[] result=new float[256];
+        // RWG height is x-major; the public biome tile is z-major.
+        for(int i=0;i<256;i++)result[i]=generator.testHeight[(i%16)*16+i/16];
+        return result;
+    }
+    private static FastKernel fast;
+    @JSExport public static int[] finalChunk(int cx,int cz) {
+        ready();
+        if(cx < -1874999 || cx > 1874999 || cz < -1874999 || cz > 1874999)throw new IllegalArgumentException("Chunk outside world bounds");
+        int[] ids=fast.selected(cx,cz),result=new int[256];
+        for(int i=0;i<256;i++){
+            int id=ids[i],x=cx*16+i%16,z=cz*16+i/16;
+            result[i]=riverAt(x,z)?RuntimeObjects.RIVER[id]:RuntimeObjects.BASE[id];
+            float[] valleys=RuntimeObjects.VALLEYS[id];
+            if(valleys.length==0)continue;
+            int top=Math.min(255,(int)fast.height(x,z));
+            if(top<0)continue;
+            for(int n=0;n<valleys.length;n++){
+                float valley=(manager.perlin.noise2(x/valleys[n],z/valleys[n])+0.25F)*65.0F;
+                valley=valley<1.0F?1.0F:valley;
+                if(!(top<=90.0F+manager.perlin.noise2(x/24.0F,z/24.0F)*10.0F-valley
+                    &&(manager.perlin.noise2(x/12.0F,z/12.0F)>=-0.28F||!RuntimeObjects.MIX[id][n])))result[i]=RuntimeObjects.DESERT;
+            }
+        }
+        return result;
+    }
+    @JSExport public static float[] fastHeights(int cx,int cz){
+        ready();float[] heights=new float[256];
+        for(int i=0;i<256;i++)heights[i]=fast.height(cx*16+i%16,cz*16+i/16);
+        return heights;
+    }
+    @JSExport public static int[] referenceFinalChunk(int cx, int cz) {
+        int[] selected=blendedChunk(cx,cz),result=new int[256];
+        for(int i=0;i<256;i++) {
+            int id=selected[i],x=cx*16+i%16,z=cz*16+i/16;
+            result[i]=riverAt(x,z)?RuntimeObjects.RIVER[id]:RuntimeObjects.BASE[id];
+            float[] valleys=RuntimeObjects.VALLEYS[id];
+            int top=Math.min(255,(int)generator.testHeight[(i%16)*16+i/16]);
+            if(top<0)continue;
+            for(int n=0;n<valleys.length;n++) {
+                float valley=(manager.perlin.noise2(x/valleys[n],z/valleys[n])+0.25F)*65.0F;
+                valley=valley<1.0F?1.0F:valley;
+                if(!(top<=90.0F+manager.perlin.noise2(x/24.0F,z/24.0F)*10.0F-valley
+                    && (manager.perlin.noise2(x/12.0F,z/12.0F)>=-0.28F || !RuntimeObjects.MIX[id][n])))result[i]=RuntimeObjects.DESERT;
+            }
+        }
+        return result;
+    }

@@ -1,56 +1,74 @@
-# RWG 主世界底图接入进度
+# RWG 主世界底图接入
 
-主世界地图还没有启用。当前完成的是原始群系选择和邻域混合，输出是 RWG realistic ID；它不等于 Minecraft 最终群系 ID，不能直接接到默认底图。
+2026-09-13：已在私有本地静态预览接入当前 GTNH 2.9.0-beta-3 实例的主世界底图。浏览器独立计算，游戏只在维护时提供采集和校准数据。默认 `dist/packs/registry.json` 为空；本地校准包单独组装，不自动分发第三方函数。
 
-## 已验证的编译链路
+## 当前结果
 
-```sh
-python tools/export-runtime.py --instance "PATH_TO_INSTANCE" --entry rwg.world.ChunkManagerRealistic --entry rwg.world.ChunkGeneratorRealistic --output private-packs/rwg-worldgen-extraction.zip
-python tools/compile-worldgen.py --input private-packs/rwg-worldgen-extraction.zip
-node tools/verify-worldgen.mjs
-node tools/preview-worldgen-validation.mjs
-```
+- 实际模式 `wrapped-perlin`，77 个 realistic 条目，59 个最终基础/河流群系。气候表保留顺序和重复权重。
+- 182 个区块覆盖全部 realistic 条目，46,592 像素与实际 Worker 一致。
+- 另外 193 个区块覆盖多个种子、long 极值、超过 2^53 的种子、负坐标和远距离坐标，49,408 像素一致。
+- 网页 Provider 的 32×32、step=4、负起点、大种子查询，另有 1,024 像素与 Worker 一致。
+- 15 个 JVM 原字节码地形案例：3,840 个最终 ID 和 3,840 个 binary32 高度与优化后的 JavaScript 一致。
+- 早期选择子集保留 432 个受控案例，110,592 像素和 1,296 个标量完全一致，含四种噪声模式。
 
-导出工具对缺失的完整游戏依赖返回非零退出码，并留下报告及中间包。后续的编译器仅消费已明确适配的选择子集，不忽略报告后假定整包可运行。先运行一次 `compile-noise.py` 准备固定版本的 Maven、TeaVM、ASM 依赖；主世界子集编译使用离线依赖缓存。
+最初只映射基础/河流群系时，覆盖测试出现 3,106 个差异，全部涉及 Hot Desert 地表替换。加入实际 terrain 和 SurfaceDuneValley 参数后修正。RWG 高度是 X-major，群系结果是 Z-major，必须转换索引；Amidst 的 step=4 查询还需要两个方块的采样中心偏移。
 
-`tools/worldgen-compiler/profile.json` 固定八个输入 class 的哈希。版本改变或运行时变换改变字节码时，工具拒绝套用旧适配器，需要重新检查字段、入口与数值对照。
+浏览器函数复用参考 Worker 的紧凑混合、八格采样缓存和共享卷积点缓存。保留大于 95% 的群系选择规则，但高度仍混合全部邻居。仅地表需要时求高度。外层区块缓存有上限，约每 16ms 让出任务，响应维度/种子取消。Node 本机测得 128×128、step=4 地图块首次约 1.3 秒，缓存后约 5ms；不代表整个首屏或所有浏览器性能。
 
-保留原字节码的计算方法：
+## 读取已运行实例
 
-- `ChunkManagerRealistic` 的 `getBiomeDataAt` 两个重载、`getOceanValue`、`diff`、`getRiverStrength`、`calculateRiver`。
-- `ChunkGeneratorRealistic` 的 `getNewNoise`、`mix4`。
-- Perlin、OpenSimplex、CellNoise 及噪声包装器。
-
-明确适配的边界：构造器改为显式初始化字段；long 缓存和区块坐标打包使用独立适配；RealisticBiomeBase 只提供身份目录。原 `getNewNoise` 同时计算地形高度，当前给地形回调提供零值并丢弃所有高度结果，只检验群系选择输出，不将这些高度交给地表 painter。
-
-JVM 对照先执行未经浮点降级处理的提取字节码；浏览器版本再为 JVM 的 float 运算和转换加入 `Math.fround`，保持单精度舍入。新增调用用于数值语义适配，不是重写群系判断规则。该实现使用 [TeaVM 的 JavaScript 调用接口](https://teavm.org/docs/runtime/jso.html)。
-
-验证覆盖 6 个种子（含 long 极值和大于 2^53）、4 种噪声模式、3 套受控目录、6 组正负及远距离区块坐标，共 432 个案例：110,592 个群系像素、1,296 项原始群系/河流强度/海洋参数完全一致。受控目录包含稀疏 ID、重复权重、可选湿润/小群系组与单一群系。浏览器 Web Worker 同样通过，实测约 1.7 秒；这是这批验证的耗时，不是正式地图性能保证。
-
-## 实际环境目录采集工具
+先以只读 Worker 请求初始化种子 0 采样器：
 
 ```sh
+python tools/worker-query.py --instance "PATH_TO_INSTANCE" --command biomes --seed 0 --output private-packs/runtime-session/tile-0.json
+python tools/worker-query.py --instance "PATH_TO_INSTANCE" --command hello --output private-packs/runtime-session/hello.json
 python tools/build-profile-agent.py
-python tests/test_profile_agent.py
 ```
 
-输出 `artifacts/profile-agent/amidst-rwg-profile.jar`。需要采集时，维护者在指定 GTNH 实例现有 JVM 参数中追加（不要覆盖原有参数）：
+采集器提供稳定入口 `artifacts/profile-agent/amidst-capture-entry.jar` 和按内容哈希命名的不可变 helper JAR。`private-packs/live-capture.properties` 指定 helper 和输出目录。用目标游戏 PID 附加：
 
-```text
--javaagent:PATH_TO/amidst-rwg-profile.jar=PATH_TO_PRIVATE_PROFILE_DIRECTORY
+```sh
+java --add-modules jdk.attach -cp artifacts/profile-agent AttachCapture GAME_PID PATH_TO/amidst-capture-entry.jar PATH_TO/live-capture.properties
 ```
 
-启动 GTNH 后，创建 RWG 群系管理器时会自动采集；仅到主菜单可能尚未创建管理器。可通过原 Worker 的种子预览触发管理器创建，无需生成或写入存档。采集结束后移除本次追加的参数；当前没有自动修改用户的启动器配置，也没有启动游戏。
+`mode=worker` 尝试读取 Worker 已保留的观察定义；本次缓存缺少管理器定义，实际采用 `mode=observed`：临时注册 JVM retransformation observer，其回调始终返回 null，采集后移除。对象读取排入 Worker 的 tick 队列。它不安装构造器钩子，无需重启，不写游戏存档；不能据此宣称其他已注册 agent 在 retransformation 时没有执行自己的逻辑。
 
-这个独立 agent 与之前的纯字节码观察工具不同：它在 RWG 构造器返回前插入一次读取回调。回调只读取选定初始化字段，写入独立目录，不调用区块生成、游戏网络或存档接口。读不到字段时报告失败，不猜测配置。它记录的是构造器返回时状态，不能证明后续模组修改或更晚注册的变换器没有改变行为。
+读取的是有界 RWG 配置对象图，包括真实 terrain/surface 参数及共享引用。不会跟随世界/存档对象或外部类的任意字段。结果按内容哈希保存；从 `live-isolated/profiles/` 明确选定本次文件，复制为 `private-packs/runtime-session/active-profile.json`。失败必须查看报告，不能把 attach 返回当作采集成功。工具不打印或存储 Worker token。
 
-采集文件记录气候组的原始顺序、重复条目、realistic ID、基础/河流群系 ID 与名称和类、噪声模式、观察到的管理器字节码哈希。相同目录按内容哈希去重；不记录种子、世界名称或认证 token。真实命名空间与色板仍需明确映射，不能从中文/英文显示名直接猜测。
+稳定入口使用独立 ClassLoader，避免 RFB 系统加载器缓存可变 JAR 的旧 ZIP 偏移。更新 helper 会创建新哈希文件；不要覆盖正在使用的 helper。
 
-采集器已在独立 JVM fixture 中验证构造器仍正常执行、重复权重/顺序保留、JSON 转义和哈希正确；尚未在 GTNH 中运行。`tools/rwg-profile.mjs` 在调用编译函数前检查目录、字节码版本、可选组开关和种子范围。
+另有启动时 premain 构造器观察方案，以及 `prepare-runtime-capture.py prepare/restore` 参数辅助工具。本次已恢复临时追加的参数，实际采集使用用户自行启动的实例。日常维护优先连接现有实例。
 
-## 接下来的接入门槛
+## 编译和对照
 
-1. 在实际实例取得初始化目录和运行时字节码，核对噪声模式及完整环境来源。
-2. 对照实际 Worker 查询结果，接入基础/河流群系映射、真实地形高度与地表替换逻辑；对未知 painter 继续提取或重放，不能凭名字猜规则。
-3. 对最终群系逐像素校准，校准色板，并确认分块查询、连续切种子和跨维度取消保持一致。
-4. 只有最终地表阶段通过的函数包才安装进 `dist/packs/`。当前的私有选择模块不注册为地图 Provider，不打进公共静态包。
+依赖缓存由 `compile-noise.py` 首次准备；后续使用缓存中的 Maven、TeaVM 0.15.0、ASM 9.8 离线编译，输出在项目 `.test-work/`。
+
+```sh
+python tools/export-runtime.py --instance "PATH_TO_INSTANCE" --entry rwg.world.ChunkManagerRealistic --entry rwg.world.ChunkGeneratorRealistic --capture private-packs/live-isolated/classes --output private-packs/rwg-live-extraction.zip
+python tools/compile-worldgen.py --input private-packs/rwg-live-extraction.zip --adapter-profile tools/worldgen-compiler/runtime-profile.json --runtime-profile private-packs/runtime-session/active-profile.json
+node tools/verify-terrain.mjs
+python tools/collect-rwg-reference.py --instance "PATH_TO_INSTANCE" --targets private-packs/runtime-session/coverage-targets.json
+node tools/calibrate-rwg.mjs --terrain --coverage
+node tools/calibrate-rwg.mjs --terrain --extra
+python tools/build-rwg-preview.py
+node tools/serve.mjs --rwg-preview
+node tools/verify-rwg-preview.mjs
+```
+
+维护者须在检查运行时字节码、字段布局和入口之后更新 `runtime-profile.json` 的 `inputClasses`，不能只自动接受新哈希。选择适配器有八个固定输入；`surface-adapter-profile.json` 另固定已检查的 realistic/surface 定义，新类或变化会拒绝旧适配。原始提取仍可能报告缺失完整 Minecraft/Forge 依赖；编译器只消费明确适配的子集。
+
+`--extra` 使用 `worker-extra-reference.json`，可用 `collect-rwg-reference.py --targets FILE --output FILE` 采集额外样本；不覆盖覆盖率样本。构建器检查校准报告的函数和配置哈希，防止沿用旧结果。生产前应扩充边界和随机覆盖，有限样本不是完整证明。
+
+保留的模组字节码包括 manager 的选择、河流、海洋函数，generator 的混合函数，实际 rNoise、terrain 和噪声函数。构造器改由明确字段和捕获对象图重建；long 缓存、坐标打包是环境适配。优化混合代码来自参考 Worker 的 `SurfaceBiomeSampler` 与 `RwgBiomeGrid`，以未优化原 generator 的 JVM 输出作独立对照。
+
+JVM 对照在加入浮点适配之前执行。浏览器代码在 float 运算/转换后使用 `Math.fround` 保留 binary32 舍入，实现依据 [TeaVM JS 调用接口](https://teavm.org/docs/runtime/jso.html)。
+
+## 配色、身份与边界
+
+59 种颜色直接运行参考 Amidst 的 `GtnhBiomeColorPalette.defaultColor` 得到，沿用实际 Worker 的标签、温度、旧 ID 等输入。不会将 RWG 的 mapColor=0 直接画成黑色。暂保留实际英文显示名称。
+
+`biome-aliases.json` 声明 Web 命名空间别名，以实际类及共享 River 类的具体变体区分身份。它们不是声称 1.7.10 官方存在的 registry key，也不保证等同于后续版本的命名。数字 ID 只放在本环境兼容映射中。
+
+当前是 RWG 洞穴生成、population、Forge 后置事件及存档编辑之前的群系预测。当前 77 个实例条目中无 IslandTropical map generator；未知 surface/class 不自动沿用旧适配器。仍需覆盖更多地表组合和新版本。
+
+实际函数、配置图、字节码和含函数的静态 ZIP 均在被忽略的 `private-packs/`。默认源码/静态打包不收录它们，再分发许可需独立确认。完整跨维度视觉验收、低性能设备首屏加载和其他复杂维度仍未完成。

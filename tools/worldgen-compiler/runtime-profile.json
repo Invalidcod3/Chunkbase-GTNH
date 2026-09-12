@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "inputClasses": {
+    "rwg/world/ChunkManagerRealistic": "90bc27fc385404b9ee36903d1b61f18512c38b37b4a93810df9238615680756e",
+    "rwg/world/ChunkGeneratorRealistic": "fcd0f1fabe9f66e8f38504c3aba0327a39c15a1c3ecc9af9dc0f8dd41823bf97",
+    "rwg/util/NoiseGenerator": "9bc87b11cfd07887097e030ac0ca3df98170c022efcf84f0856a72b85a697f97",
+    "rwg/util/PerlinNoise": "c7c1832ac08345a9a0cf9f5c1c3ce27cd39cf526f5b441a73c23a33d7ec30e89",
+    "rwg/util/OpenSimplexNoise": "e869250780dca96687e541033c95f8495ddf82bcc826cc0d4d98442846b204ae",
+    "rwg/util/OpenSimplexNoise$Contribution3": "5235ce44c57bce1a481056bfa54cf2cdd2331eb0eb801b8d6098dc5d6b7e240f",
+    "rwg/util/CellNoise": "674c13be35116e36223d30ac40e514a334e3ac30bd20a0437b847a60fc16a7c2",
+    "rwg/util/NoiseGeneratorWrapper": "f962c554af999a3009be66bb3d38f68a648d6c2b8d69107ac2338d8fcd9ec55f"
+  }
+}
