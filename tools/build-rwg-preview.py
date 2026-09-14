@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import zipfile
+import argparse
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -37,7 +38,15 @@ public class PaletteOracle {
     return {int(k):v for k,v in (line.split('=') for line in result.stdout.splitlines())}, digest(source)
 
 
-def build():
+def checked_report(name):
+    report=json.loads((ROOT/'private-packs/runtime-session'/name).read_text('utf-8'))
+    if report.get('mismatches',0) or not report.get('hashes'):raise ValueError('Invalid validation: '+name)
+    for path,expected in report['hashes'].items():
+        if digest(ROOT/path)!=expected:raise ValueError('Stale validation: '+name+' / '+path)
+    return report
+
+
+def build(resources=False):
     pack=ROOT/'private-packs/rwg-terrain-browser'
     profile=json.loads((pack/'profile.json').read_text('utf-8'))
     manifest=json.loads((pack/'manifest.json').read_text('utf-8'))
@@ -68,14 +77,40 @@ def build():
         biomes.append({'key':key,'zh':b['name'],'en':b['name'],'color':palette[id],
                        'legacy':[{'environment':'gtnh-'+profile['observedManagerSha256'][:12],'dimension':'overworld','id':id}]})
     out=ROOT/'private-packs/rwg-local-preview'
+    resource_output=out/'packs/resources'
+    if not resources and resource_output.exists():
+        # Only remove this builder's previous optional output, never an arbitrary path.
+        expected=ROOT.resolve()/'private-packs/rwg-local-preview/packs/resources'
+        if resource_output.is_symlink() or resource_output.resolve()!=expected:
+            raise ValueError('Unexpected resource output path')
+        shutil.rmtree(resource_output)
     shutil.copytree(ROOT/'dist',out,dirs_exist_ok=True)
     installed=out/'packs/rwg';installed.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(pack/'selection.js',installed/'selection.js')
     config={'noise':profile['noise'],'groups':profile['groups']}
     (installed/'provider.js').write_text('import * as engine from "./selection.js";\nimport {createRwgProvider} from "../../engine/rwg-provider.js";\nexport const provider=createRwgProvider(engine,'+json.dumps(config)+','+json.dumps(keys)+');\n','utf-8')
+    live_structures=checked_report('live-structures-validation.json') if resources else None
+    note='RWG + BOP 底图已校准；村庄及已接入模组结构通过实例样本对照。未包含存档修改。' if live_structures else 'RWG + BOP 底图已校准；村庄候选通过原 Java 离线对照，待实例复核。未包含存档修改。'
     descriptor={'id':'local-rwg-calibrated','apiVersion':1,'browserExecutable':True,'entry':'./rwg/provider.js',
-                'dimensions':[{'key':'overworld','capabilities':['biomes','structures'],'note':'RWG + BOP 底图已校准；村庄候选通过原 Java 离线对照，待实例复核。未包含存档修改。'}], 'biomes':biomes}
-    (out/'packs/registry.json').write_text(json.dumps({'schemaVersion':1,'packs':[descriptor]},ensure_ascii=False,indent=2),'utf-8')
+                'dimensions':[{'key':'overworld','capabilities':['biomes','structures'],'note':note}], 'biomes':biomes}
+    packs=[descriptor]
+    if resources:
+        validation=checked_report('resource-validation.json')
+        resource_profile=json.loads((ROOT/'private-packs/runtime-session/resource-profile.json').read_text('utf-8'))
+        environment=json.loads((ROOT/'dist/environment.json').read_text('utf-8'))
+        dimension_ids=environment['dimensionIds']
+        available={d['id']:d for d in resource_profile['dimensions']}
+        capabilities=[]
+        for key,id in dimension_ids.items():
+            if id not in available:continue
+            d=available[id]
+            capabilities.append({'key':key,'capabilities':['resources'],'resourceModes':[mode for mode,field in [('ORES','ores'),('FLUID','fluids')] if d.get(field)]})
+        installed_resources=out/'packs/resources';installed_resources.mkdir(parents=True,exist_ok=True)
+        (installed_resources/'provider.js').write_text('import {createProspectingProvider} from "../../engine/prospecting.js";\nconst response=await fetch(new URL("./profile.json",import.meta.url));\nif(!response.ok)throw new Error("Cannot load resource profile");\nexport const provider=createProspectingProvider(await response.json(),'+json.dumps(dimension_ids)+');\n','utf-8')
+        shutil.copyfile(ROOT/'private-packs/runtime-session/resource-profile.json',installed_resources/'profile.json')
+        (installed_resources/'provenance.json').write_text(json.dumps({'scope':'local-only; initialized GT and VP data and textures; no save records','validation':validation,'structures':live_structures},indent=2),'utf-8')
+        packs.append({'id':'local-resources-calibrated','apiVersion':1,'browserExecutable':True,'entry':'./resources/provider.js','dimensions':capabilities})
+    (out/'packs/registry.json').write_text(json.dumps({'schemaVersion':1,'packs':packs},ensure_ascii=False,indent=2),'utf-8')
     report={'scope':'local-only calibration preview; redistribution not reviewed','engineSha256':actual,'profileSha256':digest(pack/'profile.json'),
             'colorSourceSha256':palette_hash,'workerPixels':sum(r['pixels'] for r in reports),'jvm':oracle,'villages':villages,
             'namespaces':'Declared Web aliases for legacy classes/variants; not claims of official 1.7 registry keys.',
@@ -83,6 +118,7 @@ def build():
     (out/'packs/rwg/provenance.json').write_text(json.dumps(report,indent=2),'utf-8')
     notice=(out/'NOTICE.md').read_text('utf-8').replace('未接入：RWG/BOP 主世界完整底图、','未接入：')
     notice+='\n\n本地环境校准预览：已接入 RWG + BOP 主世界底图，含实际环境中的 Thaumcraft 群系。计算函数来自当前实例的 RWG 字节码；混合缓存来自原 Amidst-GTNH Worker。配色直接运行参考 Amidst 的默认配色方法得到。命名空间为本工具声明的旧群系别名，保留实际类来源。此包未完成上游代码再分发许可审查，不自动公开发布。\n'
+    if resources:notice+='\n本地资源包已接入当前界面的 11 个维度。GregTech / GalacticGreg 决定矿脉与地下流体，Visual Prospecting 提供显示名称、颜色和图标。已通过 41 维度的实例预测对照；所有结果仅为种子候选或初始产量，不包含存档当前余量。未配置流体的维度明确显示无配置。\n'
     (out/'NOTICE.md').write_text(notice,'utf-8')
     with zipfile.ZipFile(ROOT/'private-packs/amidst-gtnh-rwg-local-preview.zip','w',zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(out.rglob('*')):
@@ -90,4 +126,7 @@ def build():
     print('Local static preview ready: private-packs/rwg-local-preview ('+str(len(biomes))+' biome colors from reference Amidst)')
 
 
-if __name__=='__main__':build()
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--resources',action='store_true',help='Include the explicitly calibrated private resource profile')
+    build(parser.parse_args().resources)

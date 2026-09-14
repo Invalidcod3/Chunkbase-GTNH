@@ -156,7 +156,7 @@ function worldText() {
       : d.key === "end"
         ? "Fresh End; schematic island areas match the desktop preview."
         : d.map
-          ? d.key === "overworld" ? "RWG biome preview; village candidates verified offline, awaiting live comparison." : "Single-biome preview. Using environment configuration."
+          ? d.key === "overworld" ? "RWG biome preview. Using the installed environment pack." : "Single-biome preview. Using environment configuration."
           : "Biome runtime pending. Only implemented predictions are shown.";
   $("no-map").hidden = d.map;
   $("no-map-note").textContent =
@@ -171,6 +171,12 @@ function worldText() {
 }
 function resourceStatus(available) {
   const active=view.markerMode !== "STRUCTURE",d=dimensions.find(d=>d.key===dimension);
+  if(active && d.resources && d.resourceModes && !d.resourceModes.includes(view.markerMode)) {
+    $("resource-status").textContent=language==='zh'
+      ? `当前环境未在此维度配置${view.markerMode==='FLUID'?'地下流体':'矿脉'}。`
+      : 'This environment has no configuration for this resource layer in this dimension.';
+    return;
+  }
   $("resource-status").textContent=language==='zh'
     ? !d.resources || available===false ? '矿脉／流体函数包待接入；当前没有资源预测数据。' : active ? (view.markerMode==='FLUID'?'初始产量 L/Op；不代表存档当前余量。':'种子候选；未读取存档记录。') : '可切换矿脉／流体图层。'
     : !d.resources || available===false ? 'Resource function pack pending; no prediction data.' : active ? 'Seed prediction / initial L/Op; no save records.' : 'Resource layers available.';
@@ -601,6 +607,7 @@ try {
         d.structures =
           entry.capabilities.includes("structures") || d.structures;
         d.resources=entry.capabilities.includes("resources") || d.resources;
+        if(entry.capabilities.includes("resources") && entry.resourceModes) d.resourceModes=entry.resourceModes;
         if (entry.note) d.note = String(entry.note);
       }
     }

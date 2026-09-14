@@ -5,7 +5,7 @@
     {"id":"overworld-structures","command":"structures","seed":"9007199254740993","dimension":0,"dimension_key":"minecraft:overworld","x":-2048,"z":-2048,"width":4096,"height":4096},
     {"id":"nether-structures","command":"structures","seed":"9007199254740993","dimension":-1,"dimension_key":"minecraft:the_nether","x":-2048,"z":-2048,"width":4096,"height":4096},
     {"id":"nether-biomes","command":"biomes","seed":"9007199254740993","dimension":-1,"dimension_key":"minecraft:the_nether","x":-259,"z":-257,"width":128,"height":128,"step":4},
-    {"id":"twilight-biomes","command":"biomes","seed":"9007199254740993","dimension":7,"dimension_key":"twilightforest:twilight_forest","x":-259,"z":-257,"width":128,"height":128,"step":4},
+    {"id":"twilight-biomes","command":"biomes","seed":"9007199254740993","dimension":7,"dimension_key":"twilightforest:twilight_forest","x":-260,"z":-260,"width":128,"height":128,"step":4},
     {"id":"overworld-ores","command":"prospecting","seed":"9007199254740993","dimension":0,"marker_mode":"ORES","x":-256,"z":-256,"width":512,"height":512},
     {"id":"overworld-fluid","command":"prospecting","seed":"9007199254740993","dimension":0,"marker_mode":"FLUID","x":-256,"z":-256,"width":512,"height":512}
   ]

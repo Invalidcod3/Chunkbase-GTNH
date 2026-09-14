@@ -37,6 +37,7 @@ export function validateRegistry(registry, base) {
         (d) =>
           typeof d.key === "string" &&
           Array.isArray(d.capabilities) &&
+          (d.resourceModes === undefined || (Array.isArray(d.resourceModes) && d.resourceModes.every(m => ['ORES','FLUID'].includes(m)))) &&
           d.capabilities.every((c) =>
             ["biomes", "structures", "resources"].includes(c),
           ),

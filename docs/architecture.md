@@ -58,6 +58,8 @@ UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计�
 - `predictStructures({seed, dimension, bounds, config})` → `[{kind, subtype, x, z, certainty, source}]`。
 - `predictResources({seed, dimension, bounds, mode, config}, {signal})` → 资源数组，`mode` 为 `ORES` 或 `FLUID`；未安装实现返回 `null`，正常计算无结果返回 `[]`。模式切换与维度切换共用请求取消机制。
 
+资源包的维度声明可附 `resourceModes: ["ORES", "FLUID"]`，只列实际配置的模式。已安装包但维度未配置某种资源时也返回 `null`，界面根据模式声明显示“该维度未配置”，不会误报为包尚未安装。当前私有包使用 `createProspectingProvider` 读取导出的 GT/VP 注册表，算法与校准流程见 [资源预测说明](resource-prediction.md)。查询最多覆盖 65,536 个矿脉区块或流体区域，并在计算中响应取消。
+
 资源项共同字段为 `{kind,id,name,x,z,size,color,source}`，颜色为 `#rrggbb`，身份是维护者声明的资源标识。矿脉 `kind: ORE_VEIN`、`size:16`，坐标为区块中心，另含 `minY,maxY,materials` 和可选的 PNG base64 `icon`，`source` 必须为 `PREDICTED`。流体 `kind: FLUID_FIELD`、`size:128`，坐标为流体区左上角，`amounts` 是 64 个初始 L/Op 整数，索引 `dx*8+dz`，`source` 必须为 `INITIAL`。边缘流体区可以与 bounds 相交而原点在视野外。函数包结果不能夹带已记录、枯竭或当前余量状态。
 
 界面按名称／材料筛选矿脉，按名称与最低初始产量筛选流体。流体导出展开成通过阈值、中心落在当前视野内的区块；CSV 与 JSON 保留初始 L/Op，JourneyMap 使用区块中心和用户指定高度。资源显示和导出不会访问存档。

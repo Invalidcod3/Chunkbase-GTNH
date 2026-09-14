@@ -30,7 +30,7 @@ def build():
     subprocess.run(['javac','-cp',cp,'-d',str(shading),str(ROOT/'tools/worldgen-compiler/ShadeAgent.java')],check=True)
     subprocess.run(['java','-cp',str(shading)+os.pathsep+cp,'ShadeAgent',str(out/'unshaded-profile.jar'),str(out/'amidst-rwg-profile.jar')],check=True)
     subprocess.run(['javac','--add-modules','jdk.attach','-d',str(out),str(ROOT/'tools/worldgen-compiler/AttachCapture.java')],check=True)
-    subprocess.run(['javac','--release','8','-encoding','UTF-8','-cp',str(classes),'-d',str(classes),str(ROOT/'tools/worldgen-compiler/LiveCaptureObserved.java')],check=True)
+    subprocess.run(['javac','--release','8','-encoding','UTF-8','-cp',str(classes),'-d',str(classes),str(ROOT/'tools/worldgen-compiler/LiveCaptureObserved.java'),str(ROOT/'tools/worldgen-compiler/ResourceCapture.java')],check=True)
     live_manifest='Manifest-Version: 1.0\nAgent-Class: amidst.web.profile.LiveCaptureObserved\nCan-Redefine-Classes: false\nCan-Retransform-Classes: true\n\n'
     with zipfile.ZipFile(out/'observed-input.jar','w',zipfile.ZIP_DEFLATED) as jar:
         jar.writestr('META-INF/MANIFEST.MF',live_manifest)

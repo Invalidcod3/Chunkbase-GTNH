@@ -23,14 +23,14 @@ node tools/build.mjs
 | ------------------------------------------------- | ---------------------------------------------- |
 | 64 位种子、Java Random、负坐标                    | 已移植；与 Java 对照                           |
 | 末地底图、HEE 岛屿和地牢塔、混沌岛                | 已移植；沿用原 Worker 的全新末地及圆形示意范围 |
-| 主世界要塞、废弃矿井、村庄                        | 已移植；村庄在私有 RWG 包中通过 344 个候选点的原 Java 离线对照，待实例复核 |
-| LootGames、史莱姆空岛、AE2 陨石、下界要塞与尖塔   | 已移植；72 组原 Java 对照及拆分查询通过，待实例复核 |
+| 主世界要塞、废弃矿井、村庄                        | 已移植；私有 RWG 村庄已通过原 Java 离线对照及本次实例样本复核 |
+| LootGames、史莱姆空岛、AE2 陨石、下界要塞与尖塔   | 已移植；72 组原 Java 对照通过，除下界要塞外新增模组结构已通过本次实例样本复核 |
 | 月球地牢、村庄                                    | 已移植；保留原预测器特殊的负区块随机数规则     |
 | 火星洞穴、火星及部分 GalaxySpace 地牢             | 已移植；按实际维度配置计算                     |
 | 月球、火星、谷神星、土卫二、海卫八单群系底图      | 已接入；火星颜色待运行时目录校准               |
 | 主世界 RWG/BOP 底图                               | 已接入私有本地校准预览；默认分发包不含该函数包 |
 | 下界、暮色、Io、Pluto 等复杂底图                   | 未接入                                         |
-| 矿脉与流体图层、筛选、详情和导出接口              | 已实现接口与绘制；真实资源函数包及运行时目录尚未接入，页面明确显示待接入 |
+| 矿脉与流体图层、筛选、详情和导出                  | 私有本地包已接入当前 11 个界面维度；41 维度、252 组实例数值对照通过 |
 | Roguelike、原版刷怪笼、神秘时代等其余结构          | 未接入                                         |
 | 地图拖动、缩放、网格、过滤、坐标跳转、PNG         | 已实现                                         |
 | 当前视野 CSV、JSON、JourneyMap ZIP、群系 JSON     | 已实现；不直接写入游戏                         |
@@ -70,7 +70,7 @@ python tests/test_exporter.py
 
 主世界已接到私有本地静态预览。直接连接已启动的 GTNH 实例，采集实际 RWG 初始化目录及地形对象，完成群系混合、河流与沙丘地表替换。375 个区块共 96,000 像素与实际 Worker 一致；网页稀疏取样另外通过 1,024 像素对照。59 种最终群系颜色由参考 Amidst 的默认配色方法生成。
 
-已有本机采集和编译产物时，运行 `python tools/build-rwg-preview.py`、`node tools/serve.mjs --rwg-preview`，访问 `http://127.0.0.1:4175/` 并选择主世界。本地静态包为 `private-packs/amidst-gtnh-rwg-local-preview.zip`，不自动进入默认分发包。完整步骤、已验证范围和剩余限制见 [RWG 接入进度](docs/rwg-selection.md)。
+已有本机采集和编译产物时，运行 `python tools/build-rwg-preview.py --resources`、`node tools/serve.mjs --rwg-preview`，访问 `http://127.0.0.1:4175/` 并选择主世界。资源模式可切换到矿脉或地下流体。本地静态包为 `private-packs/amidst-gtnh-rwg-local-preview.zip`，不自动进入默认分发包。不带 `--resources` 时只安装 RWG 包。完整步骤、已验证范围和剩余限制见 [RWG 接入进度](docs/rwg-selection.md) 和 [资源预测与更新流程](docs/resource-prediction.md)。
 
 见 [导出工具说明](docs/runtime-export.md) 和 [接口约定](docs/architecture.md)。当前导出器能从真实实例中提取字节码、保守依赖闭包、方法调用边及缺失项；JVM 采集器能观察加载到 JVM 的字节码。
 
