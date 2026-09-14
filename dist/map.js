@@ -37,7 +37,7 @@ export class MapView {
     this.smooth = false;
     this.velocity = { x: 0, z: 0 };
     this.pointers = new Map();
-    this.filtered = new Set();
+    this.filtered = new Set(['THAUMCRAFT_AURA_NODE','THAUMCRAFT_ELDRITCH_ALTAR']);
     this.width = 0;
     this.height = 0;
     this.lastFrame = 0;
@@ -486,23 +486,16 @@ export class MapView {
           p.y > this.height + 20
         )
           continue;
-        const image = this.images.get(m.subtype) || this.images.get(m.kind);
+        const image = this.images.get(`${m.kind}:${m.subtype}`) || this.images.get(m.subtype) || this.images.get(m.kind);
         c.imageSmoothingEnabled = false;
         if (image?.complete && image.naturalWidth)
-          c.drawImage(image, Math.round(p.x) - 8, Math.round(p.y) - 8, 16, 16);
+          c.drawImage(image, Math.round(p.x) - (image.naturalWidth >> 1), Math.round(p.y) - (image.naturalHeight >> 1), image.naturalWidth, image.naturalHeight);
         else {
           c.fillStyle = m.color || "#d6cfb1";
           c.strokeStyle = "#171717";
           c.lineWidth = 2;
           c.fillRect(p.x - 5, p.y - 5, 10, 10);
           c.strokeRect(p.x - 5, p.y - 5, 10, 10);
-        }
-        if (m.certainty === "POSSIBLE") {
-          c.strokeStyle = "#ddd";
-          c.lineWidth = 1;
-          c.setLineDash([2, 2]);
-          c.strokeRect(p.x - 10, p.y - 10, 20, 20);
-          c.setLineDash([]);
         }
         if (this.selected === m) {
           c.strokeStyle = "#f4d968";

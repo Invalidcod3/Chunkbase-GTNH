@@ -16,9 +16,8 @@ export function drawResources(view,c) {
       const size=Math.max(10,Math.min(32,24*scale));
       let image=d.icon ? view.resourceImages.get(d.icon) : null;
       if(d.icon && !image){image=new Image();image.onload=()=>view.dirty=true;image.src='data:image/png;base64,'+d.icon;view.resourceImages.set(d.icon,image);if(view.resourceImages.size>512)view.resourceImages.delete(view.resourceImages.keys().next().value);}
-      if(image?.complete && image.naturalWidth)c.drawImage(image,p.x-size/2,p.y-size/2,size,size);
+      if(image?.complete && image.naturalWidth){const height=size*image.naturalHeight/image.naturalWidth;c.drawImage(image,p.x-size/2,p.y-height/2,size,height);}
       else {c.fillStyle=d.color;c.fillRect(p.x-size/2,p.y-size/2,size,size);}
-      c.strokeStyle='#e6e6e696';c.lineWidth=1;c.setLineDash([2,2]);c.strokeRect(p.x-size/2,p.y-size/2,size,size);c.setLineDash([]);
       if(48*scale>=95){c.textAlign='center';label(d.name,p.x,p.y+size/2+15);c.textAlign='left';}
     }else{
       const threshold=view.resourceFilter.minimum,values=d.amounts.filter(a=>a>=threshold),min=Math.min(...values),max=Math.max(...d.amounts),cell=16*scale,field=Math.ceil(128*scale);

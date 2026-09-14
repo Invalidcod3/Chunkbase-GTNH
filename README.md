@@ -31,7 +31,8 @@ node tools/build.mjs
 | 主世界 RWG/BOP 底图                               | 已接入私有本地校准预览；默认分发包不含该函数包 |
 | 下界、暮色、Io、Pluto 等复杂底图                   | 未接入                                         |
 | 矿脉与流体图层、筛选、详情和导出                  | 私有本地包已接入当前 11 个界面维度；41 维度、252 组实例数值对照通过 |
-| Roguelike、原版刷怪笼、神秘时代等其余结构          | 未接入                                         |
+| Roguelike 地牢、神秘时代节点和祭坛                 | 私有本地包已接入；20 组实例查询、1,079 个位置一致 |
+| 原版刷怪笼、暮色特征、末地矿物小行星等            | 待接入                                         |
 | 地图拖动、缩放、网格、过滤、坐标跳转、PNG         | 已实现                                         |
 | 当前视野 CSV、JSON、JourneyMap ZIP、群系 JSON     | 已实现；不直接写入游戏                         |
 | 完整桌面 UI、所有快捷键、完整图层与浏览器视觉回归 | 尚未达到完整一致                               |
@@ -70,7 +71,7 @@ python tests/test_exporter.py
 
 主世界已接到私有本地静态预览。直接连接已启动的 GTNH 实例，采集实际 RWG 初始化目录及地形对象，完成群系混合、河流与沙丘地表替换。375 个区块共 96,000 像素与实际 Worker 一致；网页稀疏取样另外通过 1,024 像素对照。59 种最终群系颜色由参考 Amidst 的默认配色方法生成。
 
-已有本机采集和编译产物时，运行 `python tools/build-rwg-preview.py --resources`、`node tools/serve.mjs --rwg-preview`，访问 `http://127.0.0.1:4175/` 并选择主世界。资源模式可切换到矿脉或地下流体。本地静态包为 `private-packs/amidst-gtnh-rwg-local-preview.zip`，不自动进入默认分发包。不带 `--resources` 时只安装 RWG 包。完整步骤、已验证范围和剩余限制见 [RWG 接入进度](docs/rwg-selection.md) 和 [资源预测与更新流程](docs/resource-prediction.md)。
+已有本机采集和编译产物时，运行 `python tools/build-rwg-preview.py --resources --surface`、`node tools/serve.mjs --rwg-preview`，访问 `http://127.0.0.1:4175/` 并选择主世界。资源模式可切换到矿脉或地下流体；灵气节点和祭坛需在图层面板勾选。本地静态包为 `private-packs/amidst-gtnh-rwg-local-preview.zip`，不自动进入默认分发包。完整步骤、已验证范围和剩余限制见 [RWG 接入进度](docs/rwg-selection.md)、[资源预测与更新流程](docs/resource-prediction.md) 和 [Roguelike／神秘时代结构](docs/surface-structures.md)。
 
 见 [导出工具说明](docs/runtime-export.md) 和 [接口约定](docs/architecture.md)。当前导出器能从真实实例中提取字节码、保守依赖闭包、方法调用边及缺失项；JVM 采集器能观察加载到 JVM 的字节码。
 

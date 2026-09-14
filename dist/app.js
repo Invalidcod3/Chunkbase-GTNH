@@ -82,7 +82,7 @@ function toast(message) {
 }
 const workerClient = new WorkerClient();
 function request(action, query) {
-  return workerClient.request(action, { ...query, config });
+  return workerClient.request(action, { ...query, config, excludedKinds: [...view.filtered] });
 }
 const view = new MapView($("map-canvas"), {
   request,
@@ -115,6 +115,17 @@ const assetNames = {
   TINKERS_NETHER_SLIME_ISLAND: "tinkers_blue_slime_ball",
   AUTOMAGY_NETHER_SPIRE: "thaumcraft_eldritch_altar",
   AE2_METEORITE: "ae2_certus_quartz",
+  ROGUELIKE_DUNGEON: "village",
+  "ROGUELIKE_DUNGEON:DESERT": "desert",
+  "ROGUELIKE_DUNGEON:FOREST": "woodland_mansion",
+  "ROGUELIKE_DUNGEON:ICE": "igloo",
+  "ROGUELIKE_DUNGEON:JUNGLE": "jungle",
+  "ROGUELIKE_DUNGEON:MESA": "desert",
+  "ROGUELIKE_DUNGEON:MOUNTAIN": "stronghold",
+  "ROGUELIKE_DUNGEON:PLAINS": "village",
+  "ROGUELIKE_DUNGEON:SWAMP": "witch",
+  THAUMCRAFT_AURA_NODE: "thaumcraft_aura_node",
+  THAUMCRAFT_ELDRITCH_ALTAR: "thaumcraft_eldritch_altar",
   MARS_DUNGEON: "galacticraft_mars_dungeon_brick",
   CERES_DUNGEON: "galaxyspace_ceres_dungeon_brick",
   IO_DUNGEON: "galaxyspace_io_dungeon_brick",
@@ -236,6 +247,8 @@ function renderFilters() {
   const counts = new Map();
   for (const m of view.markers)
     counts.set(m.kind, (counts.get(m.kind) || 0) + 1);
+  const optionalKinds=dimensions.find(d=>d.key===dimension)?.structureKinds||[];
+  for(const kind of optionalKinds)if(!counts.has(kind))counts.set(kind,0);
   $("kind-filters").replaceChildren(
     ...[...counts].map(([kind, count]) => {
       const label = document.createElement("label");
@@ -247,6 +260,7 @@ function renderFilters() {
         input.checked ? view.filtered.delete(kind) : view.filtered.add(kind);
         view.dirty = true;
         updateCount();
+        if(optionalKinds.includes(kind))loadWorld();
       };
       const swatch = document.createElement("span");
       swatch.className = "swatch";
@@ -608,6 +622,7 @@ try {
           entry.capabilities.includes("structures") || d.structures;
         d.resources=entry.capabilities.includes("resources") || d.resources;
         if(entry.capabilities.includes("resources") && entry.resourceModes) d.resourceModes=entry.resourceModes;
+        if(entry.structureKinds)d.structureKinds=entry.structureKinds;
         if (entry.note) d.note = String(entry.note);
       }
     }

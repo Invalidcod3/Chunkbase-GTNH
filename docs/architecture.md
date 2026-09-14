@@ -56,6 +56,8 @@ UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计�
 
 - `sampleBiomes({seed, dimension, x, z, width, height, step, config})` → `Uint16Array`。行优先，整数索引来自共享 `biomeRegistry`。包目录必须先注册群系；不要硬编码其他包的索引。
 - `predictStructures({seed, dimension, bounds, config})` → `[{kind, subtype, x, z, certainty, source}]`。
+
+结构查询可带 `excludedKinds`，地表结构模块可跳过整类昂贵扫描；只隐藏一种神秘时代标记时仍保留必要的随机数消耗。维度包可用 `structureKinds` 声明需要预先显示的图层开关，避免未扫描时没有可勾选项。图标优先按 `kind:subtype` 查找，再回退到原来的图标映射。
 - `predictResources({seed, dimension, bounds, mode, config}, {signal})` → 资源数组，`mode` 为 `ORES` 或 `FLUID`；未安装实现返回 `null`，正常计算无结果返回 `[]`。模式切换与维度切换共用请求取消机制。
 
 资源包的维度声明可附 `resourceModes: ["ORES", "FLUID"]`，只列实际配置的模式。已安装包但维度未配置某种资源时也返回 `null`，界面根据模式声明显示“该维度未配置”，不会误报为包尚未安装。当前私有包使用 `createProspectingProvider` 读取导出的 GT/VP 注册表，算法与校准流程见 [资源预测说明](resource-prediction.md)。查询最多覆盖 65,536 个矿脉区块或流体区域，并在计算中响应取消。

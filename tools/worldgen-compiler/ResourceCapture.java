@@ -10,14 +10,14 @@ import java.util.concurrent.*;
 /** Read only initialized GT/VP registries on the existing Worker's tick queue.
  * No transforms, world access, terrain requests or saved prospecting records. */
 public final class ResourceCapture {
-    private static Object field(Object owner,String name) throws Exception {
+    static Object field(Object owner,String name) throws Exception {
         Class<?> type=owner instanceof Class?(Class<?>)owner:owner.getClass();
         for(Class<?> c=type;c!=null;c=c.getSuperclass())try {
             Field f=c.getDeclaredField(name);f.setAccessible(true);return f.get(owner instanceof Class?null:owner);
         }catch(NoSuchFieldException ignored){}
         throw new NoSuchFieldException(name);
     }
-    private static Object invoke(Object owner,String name,Object... args) throws Exception {
+    static Object invoke(Object owner,String name,Object... args) throws Exception {
         Class<?> type=owner instanceof Class?(Class<?>)owner:owner.getClass();
         for(Class<?> c=type;c!=null;c=c.getSuperclass())for(Method m:c.getDeclaredMethods()) {
             if(!m.getName().equals(name)||m.getParameterTypes().length!=args.length)continue;
@@ -28,7 +28,7 @@ public final class ResourceCapture {
         }
         throw new NoSuchMethodException(type.getName()+"."+name);
     }
-    private static Map<String,Object> map(Object... args) {
+    static Map<String,Object> map(Object... args) {
         Map<String,Object> result=new LinkedHashMap<>();for(int i=0;i<args.length;i+=2)result.put((String)args[i],args[i+1]);return result;
     }
     private static String clean(Object s){return String.valueOf(s).replaceAll("\u00a7.","");}
@@ -95,6 +95,7 @@ public final class ResourceCapture {
             Map<String,Object> result=map("schemaVersion",1,"source","initialized GT/VP registries; no save data",
                 "orePattern",pattern.equals("EQUAL_SPACING")?pattern:"LEGACY","runtimeOrePattern",pattern,"dimensions",dimensions,"ores",metadata);
             Files.write(out.resolve("resource-profile.json"),RuntimeProfileAgent.json(result).getBytes(StandardCharsets.UTF_8));
+            SurfaceStructureCapture.capture(loader,out);
             return null;
         }});
         queue.add(task);

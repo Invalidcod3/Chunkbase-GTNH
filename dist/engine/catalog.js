@@ -187,6 +187,9 @@ export const kinds = {
   TINKERS_NETHER_SLIME_ISLAND: {zh:"下界史莱姆空岛",en:"Nether slime island",color:"#cc824e"},
   AUTOMAGY_NETHER_SPIRE: {zh:"Automagy 下界尖塔",en:"Automagy Nether spire",color:"#d7917e"},
   AE2_METEORITE: {zh:"AE2 陨石候选",en:"AE2 meteorite candidate",color:"#ada49e"},
+  ROGUELIKE_DUNGEON: {zh:"Roguelike 地牢",en:"Roguelike dungeon",color:"#caa779"},
+  THAUMCRAFT_AURA_NODE: {zh:"灵气节点",en:"Aura node",color:"#96d3e6"},
+  THAUMCRAFT_ELDRITCH_ALTAR: {zh:"邪术祭坛",en:"Eldritch altar",color:"#b290d8"},
   MARS_CAVERN: { zh: "火星洞穴", en: "Mars cavern", color: "#dfa58a" },
 };
 for (const key of ["mars", "ceres", "io", "enceladus", "proteus", "pluto"]) {

@@ -3,6 +3,12 @@ import assert from "node:assert/strict";
 import { createRwgProvider } from "../dist/engine/rwg-provider.js";
 import { rwgStructures } from "../dist/engine/rwg-structures.js";
 const profile={noise:"wrapped-perlin",groups:{snow:[1],cold:[1],hot:[1],wet:[],small:[]}};
+test('an incomplete raw chunk is not cached and a subsequent retry can recover',async()=>{
+ let calls=0;const engine={configure(){},finalChunk(){return ++calls===1?new Int32Array(0):new Int32Array(256).fill(1);}};
+ const provider=createRwgProvider(engine,profile,{1:'test:biome'},{registry:{get:()=>({index:1})}});
+ const q={dimension:'overworld',seed:'0',x:0,z:0,width:1,height:1,step:1};
+ await assert.rejects(provider.sampleBiomes(q),/不完整/);assert.deepEqual(Array.from(await provider.sampleBiomes(q)),[1]);assert.equal(calls,2);
+});
 function setup(options={}) {
   const calls=[],seeds=[];
   const engine={configure(seed){seeds.push(seed);},finalChunk(cx,cz){calls.push([cx,cz]);return Int32Array.from({length:256},(_,i)=>((cx*16+i%16)+(cz*16+Math.floor(i/16))*3)&255);}};

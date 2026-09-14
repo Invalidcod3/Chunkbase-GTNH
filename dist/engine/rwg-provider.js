@@ -1,6 +1,7 @@
 import { parseSeed } from "./random.js";
 import { biomeRegistry } from "./catalog.js";
 import { rwgStructures } from "./rwg-structures.js";
+import { surfaceStructures, validateSurfaceProfile } from "./surface-structures.js";
 
 // The site installs a calibrated engine and its environment-specific palette.
 // Calls are serialized by engine/worker.js; the engine owns mutable Java state.
@@ -13,6 +14,18 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
   const groups = ["snow", "cold", "hot", "wet", "small"].map(name => Int32Array.from(profile.groups[name]));
   let currentSeed;
   const chunks = new Map();
+  const rawChunks = new Map();
+  const surfaceProfile = options.surfaceProfile ? validateSurfaceProfile(options.surfaceProfile) : null;
+  function rawChunk(cx,cz) {
+    const key=`${cx}:${cz}`;
+    if(!rawChunks.has(key)) {
+      const raw=engine.finalChunk(cx,cz);
+      if(raw?.length!==256)throw new Error('RWG 返回了不完整的区块');
+      rawChunks.set(key,Int32Array.from(raw));
+      if(rawChunks.size>cacheLimit)rawChunks.delete(rawChunks.keys().next().value);
+    }
+    return rawChunks.get(key);
+  }
   function checkSignal(signal) {
     if (signal?.aborted) throw new Error("CANCELLED");
   }
@@ -20,6 +33,7 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
     if (seed !== currentSeed) {
       currentSeed = undefined;
       chunks.clear();
+      rawChunks.clear();
       engine.configure(seed, profile.noise, ...groups);
       currentSeed = seed;
     }
@@ -30,7 +44,12 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
       checkSignal(signal);
       configure(parseSeed(q.seed).toString());
       if(typeof engine.villageViable !== "function") throw new Error("RWG 函数包尚未提供村庄地形检查");
-      return rwgStructures(q, (x,z) => engine.villageViable(x,z), {signal,yieldTask});
+      const result=await rwgStructures(q, (x,z) => engine.villageViable(x,z), {signal,yieldTask});
+      if(surfaceProfile) result.push(...await surfaceStructures(q,(x,z)=>{
+        const cx=Math.floor(x/16),cz=Math.floor(z/16);
+        return rawChunk(cx,cz)[(z-cz*16)*16+x-cx*16];
+      },surfaceProfile,{signal,yieldTask,now}));
+      return result;
     },
     async sampleBiomes(q, { signal } = {}) {
       const seed = parseSeed(q.seed).toString();
@@ -52,7 +71,7 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
         let tile = chunks.get(key);
         if (!tile) {
           checkSignal(signal);
-          const raw = engine.finalChunk(cx, cz);
+          const raw = rawChunk(cx, cz);
           if (raw.length !== 256) throw new Error("RWG 返回了不完整的区块");
           tile = Uint16Array.from(raw, id => {
             const biome = registry.get(keys[id]);
