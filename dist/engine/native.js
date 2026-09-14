@@ -1,6 +1,7 @@
 import { JavaRandom, regionRandom, parseSeed, long } from "./random.js";
 import { endBiomes, endStructures } from "./end.js";
 import { dimensions, biomeRegistry, legacyDisplayKeys } from "./catalog.js";
+import { predictModStructures, netherFortresses } from "./mod-structures.js";
 export function validateBounds(b, maxArea = 67108864) {
   if (
     !b ||
@@ -67,7 +68,8 @@ export function predictStructures(q) {
   );
   const { seed, dimension, bounds: b, config = {} } = q;
   if (dimension === "end") return endStructures(seed, b, config);
-  const result = [];
+  const result = predictModStructures(q);
+  if (dimension === "nether") result.push(...netherFortresses(seed,b));
   const inside = (x, z) =>
     x >= b.minX && x < b.maxX && z >= b.minZ && z < b.maxZ;
   const add = (kind, x, z, source, certainty = "EXPECTED") => {
@@ -174,4 +176,5 @@ export const nativeProvider = {
   id: "native-v1",
   sampleBiomes,
   predictStructures,
+  predictResources: () => null,
 };

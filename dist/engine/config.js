@@ -1,10 +1,12 @@
 import { dimensions, legacyDisplayKeys } from "./catalog.js";
 import { assertResourceKey } from "./biome-registry.js";
+import { validateModConfig } from "./mod-structures.js";
 export const defaults = {
   schemaVersion: 2,
   chaosEnabled: true,
   chaosSeparation: 10000,
   moonVillagesEnabled: true,
+  villagesEnabled: true,
   mineshaftsEnabled: true,
   dimensionIds: Object.fromEntries(dimensions.map((d) => [d.key, d.id])),
 };
@@ -12,9 +14,11 @@ export function validateConfig(value) {
   if (!value || ![1, 2].includes(value.schemaVersion))
     throw new Error("不支持的环境配置版本");
   const output = structuredClone(defaults);
+  if ("modStructures" in value) output.modStructures = validateModConfig(value.modStructures);
   for (const key of [
     "chaosEnabled",
     "moonVillagesEnabled",
+    "villagesEnabled",
     "mineshaftsEnabled",
   ])
     if (key in value) {

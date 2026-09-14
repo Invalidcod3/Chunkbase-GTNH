@@ -8,7 +8,8 @@ import {
   certainty,
 } from "./engine/catalog.js";
 import { parseSeed } from "./engine/random.js";
-import { csv, journeyMap, download } from "./export.js";
+import { csv, resourceCsv, journeyMap, download } from "./export.js";
+import { resourcePoints } from "./engine/resources.js";
 import { defaults, validateConfig } from "./engine/config.js";
 import { readRegistry } from "./engine/packs.js";
 import { WorkerClient } from "./engine/worker-client.js";
@@ -26,6 +27,7 @@ try {
   if (!["zh", "en"].includes(language)) language = "zh";
 } catch {}
 const english = {
+  markerMode:"Marker mode",ores:"Ore veins",fluids:"Underground fluids",resourceSearch:"Name / material",minimumFluid:"Minimum initial L/Op",
   seed: "Seed",
   load: "Load",
   dimension: "Dimension",
@@ -53,7 +55,7 @@ const english = {
   downloadConfig: "Download configuration",
   exportTitle: "Export current view",
   exportNote:
-    "Exports structures in the current dimension, view and filters. Predictions do not confirm generated structures.",
+    "Exports the current dimension, view, marker mode and filters. Fluid exports use chunk centres and initial L/Op.",
   limit: "Maximum waypoints",
   waypointY: "JourneyMap waypoint height",
   exportFoot:
@@ -106,6 +108,13 @@ const assetNames = {
   MINESHAFT: "mineshaft",
   MOON_DUNGEON: "galacticraft_moon_dungeon_brick",
   MOON_VILLAGE: "galacticraft_alien_villager",
+  VILLAGE: "village",
+  NETHER_FORTRESS: "nether_fortress",
+  LOOTGAMES_DUNGEON: "lootgames_dungeon",
+  TINKERS_SLIME_ISLAND: "tinkers_blue_slime_ball",
+  TINKERS_NETHER_SLIME_ISLAND: "tinkers_blue_slime_ball",
+  AUTOMAGY_NETHER_SPIRE: "thaumcraft_eldritch_altar",
+  AE2_METEORITE: "ae2_certus_quartz",
   MARS_DUNGEON: "galacticraft_mars_dungeon_brick",
   CERES_DUNGEON: "galaxyspace_ceres_dungeon_brick",
   IO_DUNGEON: "galaxyspace_io_dungeon_brick",
@@ -147,17 +156,24 @@ function worldText() {
       : d.key === "end"
         ? "Fresh End; schematic island areas match the desktop preview."
         : d.map
-          ? "Single-biome preview. Using environment configuration."
+          ? d.key === "overworld" ? "RWG biome preview; village candidates verified offline, awaiting live comparison." : "Single-biome preview. Using environment configuration."
           : "Biome runtime pending. Only implemented predictions are shown.";
   $("no-map").hidden = d.map;
   $("no-map-note").textContent =
     language === "zh"
       ? d.note
       : "The required biome generator has not been ported yet.";
-  $("resource-status").textContent =
-    language === "zh"
-      ? "矿脉与流体预测待接入"
-      : "Ore and fluid prediction pending";
+  $("resource-controls").hidden=view.markerMode === "STRUCTURE";
+  $("fluid-threshold").hidden=view.markerMode !== "FLUID";
+  $("kind-filters").hidden=view.markerMode !== "STRUCTURE";
+  $("show-structures").disabled=view.markerMode !== "STRUCTURE";
+  resourceStatus();
+}
+function resourceStatus(available) {
+  const active=view.markerMode !== "STRUCTURE",d=dimensions.find(d=>d.key===dimension);
+  $("resource-status").textContent=language==='zh'
+    ? !d.resources || available===false ? '矿脉／流体函数包待接入；当前没有资源预测数据。' : active ? (view.markerMode==='FLUID'?'初始产量 L/Op；不代表存档当前余量。':'种子候选；未读取存档记录。') : '可切换矿脉／流体图层。'
+    : !d.resources || available===false ? 'Resource function pack pending; no prediction data.' : active ? 'Seed prediction / initial L/Op; no save records.' : 'Resource layers available.';
 }
 function loadWorld() {
   try {
@@ -184,13 +200,16 @@ async function refreshStructures(bounds) {
   $("progress").hidden = false;
   $("progress").textContent = language === "zh" ? "计算中…" : "Computing…";
   try {
-    const result = await request("predictStructures", {
+    const resourceMode=view.markerMode !== "STRUCTURE";
+    const result = await request(resourceMode ? "predictResources" : "predictStructures", {
       seed,
       dimension,
       bounds,
+      mode:view.markerMode,
     });
     if (revision !== structureRevision || world !== worldRevision) return;
-    view.markers = result.map((m) => ({ ...m, color: kinds[m.kind]?.color }));
+    if(resourceMode){view.resources=result||[];view.markers=[];resourceStatus(result!==null);}
+    else {view.markers = result.map((m) => ({ ...m, color: kinds[m.kind]?.color }));view.resources=[];}
     loadedBounds = bounds;
     view.dirty = true;
     renderFilters();
@@ -198,6 +217,7 @@ async function refreshStructures(bounds) {
     if (revision === structureRevision && error.message !== "CANCELLED") {
       loadedBounds = null;
       view.markers = [];
+      view.resources = [];
       view.dirty = true;
       renderFilters();
       toast(error.message);
@@ -235,18 +255,21 @@ function renderFilters() {
 }
 function updateCount() {
   $("count").textContent =
-    `${view.visibleMarkers().length.toLocaleString()} ${language === "zh" ? "个结构" : "structures"}`;
+    view.markerMode === "STRUCTURE" ? `${view.visibleMarkers().length.toLocaleString()} ${language === "zh" ? "个结构" : "structures"}` : `${view.visibleResources().length.toLocaleString()} ${language==='zh' ? (view.markerMode==='ORES'?'个矿脉候选':'个流体区') : (view.markerMode==='ORES'?'ore candidates':'fluid fields')}`;
 }
 function showDetail(marker, point) {
   selectedPoint = marker || { x: Math.floor(point.x), z: Math.floor(point.z) };
+  if(marker?.amounts)selectedPoint={x:Math.floor(point.x/16)*16+8,z:Math.floor(point.z/16)*16+8};
   $("detail").hidden = false;
   $("detail-title").textContent = marker
-    ? kinds[marker.kind]?.[language] || marker.kind
+    ? marker.name || kinds[marker.kind]?.[language] || marker.kind
     : language === "zh"
       ? "地图坐标"
       : "Map coordinates";
   const lines = [`X: ${selectedPoint.x} · Z: ${selectedPoint.z}`];
   if (marker) {
+    if(marker.kind==='ORE_VEIN')lines.push(`Y: ${marker.minY}–${marker.maxY}`,marker.materials||'',language==='zh'?'种子预测候选':'Seed candidate');
+    if(marker.amounts){const i=Math.floor((point.x-marker.x)/16)*8+Math.floor((point.z-marker.z)/16);lines.push(`${marker.amounts[i]} L/Op · ${language==='zh'?'初始产量':'initial production'}`);}
     if (marker.subtype) lines.push(marker.subtype);
     lines.push(
       language === "zh"
@@ -261,7 +284,7 @@ function showDetail(marker, point) {
   $("detail-content").replaceChildren(
     ...lines.map((text) => {
       const p = document.createElement("p");
-      p.textContent = text;
+      p.textContent = text || "";
       return p;
     }),
   );
@@ -270,8 +293,8 @@ function renderCapabilities() {
   const table = document.createElement("table");
   const header = table.insertRow();
   for (const value of language === "zh"
-    ? ["维度", "底图", "结构"]
-    : ["Dimension", "Biomes", "Structures"]) {
+    ? ["维度", "底图", "结构", "资源"]
+    : ["Dimension", "Biomes", "Structures", "Resources"]) {
     const th = document.createElement("th");
     th.textContent = value;
     header.append(th);
@@ -282,6 +305,7 @@ function renderCapabilities() {
       d[language],
       d.map ? (language === "zh" ? "已接入" : "Available") : "—",
       d.structures ? (language === "zh" ? "部分已接入" : "Partial") : "—",
+      d.resources ? (language==='zh'?'已安装函数包':'Pack installed') : '—',
     ])
       row.insertCell().textContent = text;
   }
@@ -301,6 +325,14 @@ $("dimension").onchange = () => {
   dimension = $("dimension").value;
   loadWorld();
 };
+$("marker-mode").onchange=()=>{view.markerMode=$("marker-mode").value;loadWorld();};
+function resourceFilterChanged(){
+  const minimum=Number($("minimum-fluid").value);
+  if(!Number.isInteger(minimum)||minimum<0||minimum>429496)return toast('最低产量须为有效的非负整数');
+  view.resourceFilter={text:$("resource-search").value,minimum};view.selected=null;$("detail").hidden=true;view.dirty=true;updateCount();
+}
+$("resource-search").oninput=resourceFilterChanged;
+$("minimum-fluid").oninput=resourceFilterChanged;
 $("view-end").onclick = () => {
   dimension = "end";
   $("dimension").value = "end";
@@ -428,17 +460,19 @@ async function exportView(format) {
   const button = $("export-" + format);
   button.disabled = true;
   try {
-    const all = await request("predictStructures", { seed, dimension, bounds });
+    const mode=view.markerMode,resourceMode=mode!=="STRUCTURE";
+    const all = await request(resourceMode?"predictResources":"predictStructures", { seed, dimension, bounds, mode });
     if (revision !== worldRevision) throw new Error("地图已切换，请重新导出");
-    const filtered = all
+    if(all===null)throw new Error('此资源图层尚未接入函数包');
+    const filtered = (resourceMode?resourcePoints(all,view.resourceFilter,bounds):all)
         .filter((m) => !view.filtered.has(m.kind))
         .sort((a, b) => a.z - b.z || a.x - b.x || a.kind.localeCompare(b.kind)),
       markers = filtered.slice(0, limit);
     if (!markers.length)
       return toast(
         language === "zh"
-          ? "当前视野及筛选内没有结构"
-          : "No structures in the current view and filters",
+          ? "当前视野及筛选内没有可导出的标记"
+          : "No markers in the current view and filters",
       );
     const context = {
       seed,
@@ -447,16 +481,18 @@ async function exportView(format) {
       bounds,
       config,
       recordSource: "prediction",
+      markerMode:mode,
+      ...(resourceMode?{resourceFilter:{...view.resourceFilter}}:{}),
       truncated: filtered.length > limit,
     };
-    const name = `amidst-${dimension}-${seed}`;
+    const name = `amidst-${dimension}-${seed}${resourceMode?'-'+mode.toLowerCase():''}`;
     if (format === "csv")
-      download(name + ".csv", csv(markers, context), "text/csv;charset=utf-8");
+      download(name + ".csv", (resourceMode?resourceCsv:csv)(markers, context), "text/csv;charset=utf-8");
     else if (format === "json")
       download(
         name + ".json",
         JSON.stringify(
-          { schemaVersion: 1, ...context, structures: markers },
+          { schemaVersion: 1, ...context, [resourceMode?'resources':'structures']: markers },
           null,
           2,
         ),
@@ -564,6 +600,7 @@ try {
         d.map = entry.capabilities.includes("biomes") || d.map;
         d.structures =
           entry.capabilities.includes("structures") || d.structures;
+        d.resources=entry.capabilities.includes("resources") || d.resources;
         if (entry.note) d.note = String(entry.note);
       }
     }

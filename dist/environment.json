@@ -3,7 +3,20 @@
   "chaosEnabled": true,
   "chaosSeparation": 10000,
   "moonVillagesEnabled": true,
+  "villagesEnabled": true,
   "mineshaftsEnabled": true,
+  "modStructures": {
+    "lootGamesEnabled": true,
+    "lootGamesRhombus": 20,
+    "slimeOverworldEnabled": true,
+    "slimeNetherEnabled": false,
+    "slimeRarity": 8000,
+    "meteoritesEnabled": true,
+    "meteoriteDistance": 707,
+    "meteoriteSurfaceChance": 0.3,
+    "netherSpiresEnabled": true,
+    "netherSpireChance": 140
+  },
   "dimensionIds": {
     "overworld": 0,
     "nether": -1,

@@ -35,3 +35,4 @@ summary.engineSha256=createHash("sha256").update(await readFile(new URL(folder+"
 summary.profileSha256=createHash("sha256").update(await readFile(new URL("runtime-session/active-profile.json",root))).digest("hex");
 await writeFile(new URL("runtime-session/"+(terrain?"terrain-":"")+suffix+"calibration.json",root),JSON.stringify(summary,null,2));
 console.log(JSON.stringify({...summary,examples:summary.examples.slice(0,3)}));
+if(summary.mismatches) process.exitCode=1;

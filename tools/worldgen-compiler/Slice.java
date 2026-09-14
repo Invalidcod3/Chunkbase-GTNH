@@ -66,7 +66,11 @@ public final class Slice implements Opcodes {
                 // Only dependency-free noise implementations are accepted.
                 if (type.startsWith("rwg/util/") && !Arrays.asList("NoiseGenerator", "PerlinNoise", "OpenSimplexNoise", "OpenSimplexNoise$Contribution3", "CellNoise", "NoiseGeneratorWrapper").contains(type.substring(9))) continue;
                 byte[] bytes = input.getInputStream(entry).readAllBytes();
-                if ((args[0].equals("slice")||args[0].equals("terrain")) && METHODS.containsKey(type)) bytes = slice(bytes, METHODS.get(type));
+                if ((args[0].equals("slice")||args[0].equals("terrain")) && METHODS.containsKey(type)) {
+                    Set<String> keep=new HashSet<>(METHODS.get(type));
+                    if(args[0].equals("terrain")&&type.equals("rwg/world/ChunkManagerRealistic"))keep.addAll(Arrays.asList("getNoiseAt","func_76940_a"));
+                    bytes = slice(bytes, keep);
+                }
                 if(terrain){
                     ClassNode n=new ClassNode();new ClassReader(bytes).accept(n,ClassReader.SKIP_CODE);
                     Set<String> keep=new HashSet<>();

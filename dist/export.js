@@ -32,6 +32,11 @@ export function csv(markers, context) {
       .join("\r\n")
   );
 }
+export function resourceCsv(markers,context){
+  const rows=[['seed','dimension_key','dimension_id','kind','resource_id','name','materials','x','z','min_y','max_y','initial_l_per_op','source'],
+    ...markers.map(m=>[context.seed,context.dimension,context.dimensionId,m.kind,m.id,m.name,m.materials,m.x,m.z,m.minY,m.maxY,m.amount,m.source])];
+  return '\ufeff'+rows.map(row=>row.map(escapeCsv).join(',')).join('\r\n');
+}
 export function crc32(data) {
   let crc = 0xffffffff;
   for (const byte of data) {
@@ -94,7 +99,7 @@ export function journeyMap(markers, context, y = 64) {
         const id = `${m.kind}_${m.x}_${m.z}`,
           value = {
             id,
-            name: `${m.kind} (${m.certainty})`,
+            name: `${m.name || m.kind}${m.amount===undefined?'':` ${m.amount} L/Op`} (${m.certainty})`,
             icon: "waypoint-normal.png",
             x: m.x,
             y,

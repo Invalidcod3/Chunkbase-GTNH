@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createRwgProvider } from "../dist/engine/rwg-provider.js";
+import { rwgStructures } from "../dist/engine/rwg-structures.js";
 const profile={noise:"wrapped-perlin",groups:{snow:[1],cold:[1],hot:[1],wet:[],small:[]}};
 function setup(options={}) {
   const calls=[],seeds=[];
@@ -40,4 +41,25 @@ test("RWG yields during a long request and accepts a new seed after cancellation
   await assert.rejects(provider.sampleBiomes(q,{signal:controller.signal}),/CANCELLED/);
   const result=await provider.sampleBiomes({...q,seed:"1",width:1,height:1});
   assert.equal(result.length,1);assert.deepEqual(seeds,["0","1"]);
+});
+test("RWG village and biome requests share seed state without reusing another seed's chunks",async()=>{
+  const seeds=[];let current;
+  const engine={configure(seed){current=seed;seeds.push(seed);},finalChunk(){return new Int32Array(256).fill(1);},villageViable(){return current==="0";}};
+  const provider=createRwgProvider(engine,profile,{1:"test:biome"},{registry:{get:()=>({index:1})}});
+  const q={seed:"0",dimension:"overworld",bounds:{minX:-1000,minZ:-1000,maxX:1000,maxZ:1000},config:{mineshaftsEnabled:false}};
+  const tile={seed:"0",dimension:"overworld",x:0,z:0,width:1,height:1,step:1};
+  await provider.sampleBiomes(tile);
+  assert.ok((await provider.predictStructures(q)).some(m=>m.kind==="VILLAGE"));
+  assert.ok(!(await provider.predictStructures({...q,seed:"1"})).some(m=>m.kind==="VILLAGE"));
+  await provider.sampleBiomes(tile);assert.deepEqual(seeds,["0","1","0"]);
+});
+test("RWG village bounds split without omissions or duplicates, and cancellation rejects",async()=>{
+  const q={seed:"9007199254740993",dimension:"overworld",bounds:{minX:-1001,minZ:-997,maxX:1100,maxZ:1075},config:{mineshaftsEnabled:false}};
+  const encode=values=>values.filter(m=>m.kind==="VILLAGE").map(m=>`${m.x},${m.z}`).sort();
+  const full=encode(await rwgStructures(q,()=>true));assert.ok(full.length);
+  const left=await rwgStructures({...q,bounds:{...q.bounds,maxX:-4}},()=>true);
+  const right=await rwgStructures({...q,bounds:{...q.bounds,minX:-4}},()=>true);
+  assert.deepEqual(encode([...left,...right]),full);
+  const controller=new AbortController();controller.abort();
+  await assert.rejects(rwgStructures(q,()=>true,{signal:controller.signal}),/CANCELLED/);
 });

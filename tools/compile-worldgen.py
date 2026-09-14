@@ -78,7 +78,7 @@ def compile_worldgen(archive, adapter_profile=None, runtime_profile=None):
         start = entry.index('    public static void main(String[] arguments) {')
         # JVM oracle uses this exact captured profile, before browser float lowering.
         groups = ','.join('new int[]{'+','.join(map(str,profile['groups'][g]))+'}' for g in ['snow','cold','hot','wet','small'])
-        entry = entry[:start]+'''    public static void main(String[] args) {
+        entry = entry[:start]+'public static void configureCaptured(String seed){configure(seed,"'+profile['noise']+'",'+groups+');}\n'+'''    public static void main(String[] args) {
         boolean first=true; System.out.print("[");
         for(String seed:new String[]{"0","-1","9007199254740993"}) {
             configure(seed,"'''+profile['noise']+'",'+groups+''');
@@ -93,6 +93,11 @@ def compile_worldgen(archive, adapter_profile=None, runtime_profile=None):
 }
 '''
         (src/'BiomeExports.java').write_text(entry, 'utf-8')
+        shutil.copyfile(ROOT/'tools/worldgen-compiler/VillageOracle.java',src/'VillageOracle.java')
+        shutil.copyfile(ROOT/'reference/Amidst-GTNH/gtnh-worker/src/main/java/amidst/gtnh/worker/RwgStructurePredictor.java',src/'RwgStructurePredictor.java')
+        (src/'SurfaceBiomeSampler.java').write_text('package amidst.gtnh.worker; interface SurfaceBiomeSampler {boolean isVillageLocationViable(int x,int z);}', 'utf-8')
+        (src/'RoguelikeDungeonPredictor.java').write_text('package amidst.gtnh.worker; class RoguelikeDungeonPredictor {static class StructureDescriptor {final String kind,subtype,certainty;final int x,z;StructureDescriptor(String k,String s,int x,int z,String c){kind=k;subtype=s;this.x=x;this.z=z;certainty=c;}}}', 'utf-8')
+        (src/'ConfigRWG.java').write_text('package rwg.config; public class ConfigRWG {public static boolean generateVillages=true,generateMineshafts=false;}', 'utf-8')
     pom = (ROOT/'tools/noise-compiler/pom.xml').read_text('utf-8')
     pom = pom.replace('rwg-noise-browser', 'rwg-selection-browser').replace('noise-input.jar', 'selection-input.jar').replace('amidst.web.NoiseExports','amidst.web.BiomeExports').replace('noise.js','selection.js')
     (work/'pom.xml').write_text(pom,'utf-8')
@@ -102,6 +107,9 @@ def compile_worldgen(archive, adapter_profile=None, runtime_profile=None):
     run(maven+['compiler:compile'], cwd=work)
     oracle = run(['java', '-cp', str(work/'target/classes')+os.pathsep+str(work/'selection-input.jar'), 'amidst.web.BiomeExports'], capture_output=True, text=True)
     fixtures = json.loads(oracle.stdout)
+    villages = None
+    if profile:
+        villages = json.loads(run(['java','-cp',str(work/'target/classes')+os.pathsep+str(work/'selection-input.jar'),'amidst.gtnh.worker.VillageOracle'],capture_output=True,text=True).stdout)
     # JVM oracle above uses unmodified arithmetic. Browser lowering is validated against it.
     run(java+['round', work/'selection-input.jar', work/'rounded-input.jar'])
     shutil.copyfile(work/'rounded-input.jar', work/'selection-input.jar')
@@ -111,6 +119,7 @@ def compile_worldgen(archive, adapter_profile=None, runtime_profile=None):
     output.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(work/'target/browser/selection.js', output/'selection.js')
     (output/'reference.json').write_text(json.dumps(fixtures),'utf-8')
+    if villages is not None:(output/'village-reference.json').write_text(json.dumps(villages),'utf-8')
     report = {'schemaVersion':1, 'kind':'browser-function-library', 'browserExecutable':True,
               'stage':'realistic-biome-selection', 'worldBiomeGenerator':False,
               'compiler':'TeaVM 0.15.0', 'floatArithmetic':'binary32 after each JVM float arithmetic/conversion opcode',

@@ -1,4 +1,6 @@
 import { biomeByIndex } from "./engine/catalog.js";
+import { resourceMatches } from "./engine/resources.js";
+import { drawResources, hitResource } from "./resource-view.js";
 export class MapView {
   constructor(canvas, { request, onMove, onSelect, onViewport, onError }) {
     Object.assign(this, {
@@ -19,6 +21,10 @@ export class MapView {
     this.pending = new Set();
     this.failedTiles = new Map();
     this.markers = [];
+    this.resources = [];
+    this.resourceImages = new Map();
+    this.markerMode = "STRUCTURE";
+    this.resourceFilter = {text:"",minimum:0};
     this.images = new Map();
     this.generation = 0;
     this.active = true;
@@ -226,6 +232,7 @@ export class MapView {
     this.pending.clear();
     this.failedTiles.clear();
     this.markers = [];
+    this.resources = [];
     this.selected = null;
     this.changed();
   }
@@ -377,10 +384,16 @@ export class MapView {
   visibleMarkers() {
     return this.markers.filter((m) => !this.filtered.has(m.kind));
   }
+  visibleResources() {
+    return this.resources.filter(d=>resourceMatches(d,this.resourceFilter));
+  }
   select(point) {
+    if(this.markerMode !== "STRUCTURE") {
+      this.selected=hitResource(this,point);this.dirty=true;this.onSelect(this.selected,point);return;
+    }
     let nearest = null,
       distance = 50 / this.scale;
-    if (this.showStructures)
+    if (this.showStructures && this.markerMode === "STRUCTURE")
       for (const m of this.visibleMarkers()) {
         const d = Math.hypot(m.x - point.x, m.z - point.z);
         if (d < distance) {
@@ -463,7 +476,7 @@ export class MapView {
     c.moveTo(origin.x, origin.y - 5);
     c.lineTo(origin.x, origin.y + 5);
     c.stroke();
-    if (this.showStructures)
+    if (this.showStructures && this.markerMode === "STRUCTURE")
       for (const m of this.visibleMarkers()) {
         const p = this.screen(m.x, m.z);
         if (
@@ -497,6 +510,7 @@ export class MapView {
           c.strokeRect(p.x - 12, p.y - 12, 24, 24);
         }
       }
+    if(this.markerMode !== "STRUCTURE") drawResources(this,c);
     const ideal = 200 / this.scale,
       power = 10 ** Math.floor(Math.log10(ideal));
     let unit = power;

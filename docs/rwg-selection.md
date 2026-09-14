@@ -47,6 +47,7 @@ java --add-modules jdk.attach -cp artifacts/profile-agent AttachCapture GAME_PID
 python tools/export-runtime.py --instance "PATH_TO_INSTANCE" --entry rwg.world.ChunkManagerRealistic --entry rwg.world.ChunkGeneratorRealistic --capture private-packs/live-isolated/classes --output private-packs/rwg-live-extraction.zip
 python tools/compile-worldgen.py --input private-packs/rwg-live-extraction.zip --adapter-profile tools/worldgen-compiler/runtime-profile.json --runtime-profile private-packs/runtime-session/active-profile.json
 node tools/verify-terrain.mjs
+node tools/verify-rwg-villages.mjs
 python tools/collect-rwg-reference.py --instance "PATH_TO_INSTANCE" --targets private-packs/runtime-session/coverage-targets.json
 node tools/calibrate-rwg.mjs --terrain --coverage
 node tools/calibrate-rwg.mjs --terrain --extra

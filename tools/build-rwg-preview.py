@@ -50,6 +50,9 @@ def build():
         reports.append(report)
     oracle=json.loads((pack/'jvm-validation.json').read_text('utf-8'))
     if oracle['engineSha256']!=actual:raise ValueError('Stale JVM validation')
+    villages=json.loads((pack/'village-validation.json').read_text('utf-8'))
+    if villages['engineSha256']!=actual or villages['matchedVillages']<1:
+        raise ValueError('Current village engine has not passed offline Java validation')
     catalog={v['legacyId']:v for b in profile['biomes'] for v in [b['base'],b['river']]}
     hello=json.loads((ROOT/'private-packs/runtime-session/hello.json').read_text('utf-8'))
     descriptors={b['id']:b for b in hello['biomes']}
@@ -71,10 +74,10 @@ def build():
     config={'noise':profile['noise'],'groups':profile['groups']}
     (installed/'provider.js').write_text('import * as engine from "./selection.js";\nimport {createRwgProvider} from "../../engine/rwg-provider.js";\nexport const provider=createRwgProvider(engine,'+json.dumps(config)+','+json.dumps(keys)+');\n','utf-8')
     descriptor={'id':'local-rwg-calibrated','apiVersion':1,'browserExecutable':True,'entry':'./rwg/provider.js',
-                'dimensions':[{'key':'overworld','capabilities':['biomes'],'note':'本地校准预览 · RWG + BOP；按种子预测，未包含存档中的后续修改。'}], 'biomes':biomes}
+                'dimensions':[{'key':'overworld','capabilities':['biomes','structures'],'note':'RWG + BOP 底图已校准；村庄候选通过原 Java 离线对照，待实例复核。未包含存档修改。'}], 'biomes':biomes}
     (out/'packs/registry.json').write_text(json.dumps({'schemaVersion':1,'packs':[descriptor]},ensure_ascii=False,indent=2),'utf-8')
     report={'scope':'local-only calibration preview; redistribution not reviewed','engineSha256':actual,'profileSha256':digest(pack/'profile.json'),
-            'colorSourceSha256':palette_hash,'workerPixels':sum(r['pixels'] for r in reports),'jvm':oracle,
+            'colorSourceSha256':palette_hash,'workerPixels':sum(r['pixels'] for r in reports),'jvm':oracle,'villages':villages,
             'namespaces':'Declared Web aliases for legacy classes/variants; not claims of official 1.7 registry keys.',
             'limitations':['RWG pre-cave/pre-population prediction','No save edits or Forge post-generation listeners','Other dimensions retain the existing preview support']}
     (out/'packs/rwg/provenance.json').write_text(json.dumps(report,indent=2),'utf-8')

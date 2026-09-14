@@ -5,6 +5,10 @@
         return result;
     }
     private static FastKernel fast;
+    @JSExport public static boolean villageViable(int x,int z) {
+        ready();return manager.func_76940_a(x,z,0,Collections.emptyList());
+    }
+    @JSExport public static float rawHeight(int x,int z) {ready();return manager.getNoiseAt(x,z);}
     @JSExport public static int[] finalChunk(int cx,int cz) {
         ready();
         if(cx < -1874999 || cx > 1874999 || cz < -1874999 || cz > 1874999)throw new IllegalArgumentException("Chunk outside world bounds");

@@ -18,7 +18,7 @@ UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计�
 - 生物群系底图与结构各自请求，绘制已有缓存。界面显式显示未接入的地图，保留可用结构。
 - 浏览器快捷键冲突需要适配；当前有地图焦点下的方向键、加减号和 Home。
 
-未实现的矿脉/流体叠层不能被宣称完成外观一致性。后续仍需对照原图的透明度、标签阈值、候选/已记录样式和筛选语义。
+资源叠层沿用原 `ProspectingOverlay` 的矿脉图标尺寸、虚线、流体区块透明度、最高产量金框、标签缩放阈值与 X 优先的 8×8 产量数组顺序。实际资源函数包和目录尚未接入，因此暂未完成真实资源的外观验收；没有示例矿脉混入用户地图。
 
 ## 生物群系
 
@@ -56,11 +56,15 @@ UI 不依赖 GTNH Java 类；Provider 不依赖 DOM。更换 Illustrator 设计�
 
 - `sampleBiomes({seed, dimension, x, z, width, height, step, config})` → `Uint16Array`。行优先，整数索引来自共享 `biomeRegistry`。包目录必须先注册群系；不要硬编码其他包的索引。
 - `predictStructures({seed, dimension, bounds, config})` → `[{kind, subtype, x, z, certainty, source}]`。
-- `predictResources` 为后续接口名称；当前 UI 尚未调用，不能把声明等同于已显示资源。
+- `predictResources({seed, dimension, bounds, mode, config}, {signal})` → 资源数组，`mode` 为 `ORES` 或 `FLUID`；未安装实现返回 `null`，正常计算无结果返回 `[]`。模式切换与维度切换共用请求取消机制。
+
+资源项共同字段为 `{kind,id,name,x,z,size,color,source}`，颜色为 `#rrggbb`，身份是维护者声明的资源标识。矿脉 `kind: ORE_VEIN`、`size:16`，坐标为区块中心，另含 `minY,maxY,materials` 和可选的 PNG base64 `icon`，`source` 必须为 `PREDICTED`。流体 `kind: FLUID_FIELD`、`size:128`，坐标为流体区左上角，`amounts` 是 64 个初始 L/Op 整数，索引 `dx*8+dz`，`source` 必须为 `INITIAL`。边缘流体区可以与 bounds 相交而原点在视野外。函数包结果不能夹带已记录、枯竭或当前余量状态。
+
+界面按名称／材料筛选矿脉，按名称与最低初始产量筛选流体。流体导出展开成通过阈值、中心落在当前视野内的区块；CSV 与 JSON 保留初始 L/Op，JourneyMap 使用区块中心和用户指定高度。资源显示和导出不会访问存档。
 
 `seed` 始终是十进制字符串。bounds 使用左闭右开整数范围，X/Z 单位为方块。命名空间目录在主线程与 Worker 分别注册，传输时不依赖两边索引顺序一致。每一 Worker 具有独立 Provider 状态，游戏端全局可变对象不应穿过此边界。
 
-当前只支持覆盖内置维度；新增维度目录和资源 UI 仍需实现。版本未知或目录冲突时必须报错，不退回伪造数据。
+当前只支持覆盖内置维度；动态新增维度目录仍需实现。版本未知或目录冲突时必须报错，不退回伪造数据。
 
 ## 存档接口（首版不实现分析）
 

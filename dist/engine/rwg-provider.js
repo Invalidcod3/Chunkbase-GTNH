@@ -1,5 +1,6 @@
 import { parseSeed } from "./random.js";
 import { biomeRegistry } from "./catalog.js";
+import { rwgStructures } from "./rwg-structures.js";
 
 // The site installs a calibrated engine and its environment-specific palette.
 // Calls are serialized by engine/worker.js; the engine owns mutable Java state.
@@ -15,8 +16,22 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
   function checkSignal(signal) {
     if (signal?.aborted) throw new Error("CANCELLED");
   }
+  function configure(seed) {
+    if (seed !== currentSeed) {
+      currentSeed = undefined;
+      chunks.clear();
+      engine.configure(seed, profile.noise, ...groups);
+      currentSeed = seed;
+    }
+  }
   return {
     apiVersion: 1,
+    async predictStructures(q, { signal } = {}) {
+      checkSignal(signal);
+      configure(parseSeed(q.seed).toString());
+      if(typeof engine.villageViable !== "function") throw new Error("RWG 函数包尚未提供村庄地形检查");
+      return rwgStructures(q, (x,z) => engine.villageViable(x,z), {signal,yieldTask});
+    },
     async sampleBiomes(q, { signal } = {}) {
       const seed = parseSeed(q.seed).toString();
       // Amidst/Worker quarter-resolution tiles sample the centre of each 4x4 cell.
@@ -28,12 +43,7 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
           || [q.x + offset, q.z + offset, q.x + (q.width - 1) * q.step + offset, q.z + (q.height - 1) * q.step + offset].some(v => Math.abs(v) > 29999983))
         throw new Error("RWG 底图请求超出有效范围");
       checkSignal(signal);
-      if (seed !== currentSeed) {
-        currentSeed = undefined;
-        chunks.clear();
-        engine.configure(seed, profile.noise, ...groups);
-        currentSeed = seed;
-      }
+      configure(seed);
       const result = new Uint16Array(q.width * q.height);
       let deadline = now() + 16;
       for (let row = 0; row < q.height; row++) for (let col = 0; col < q.width; col++) {

@@ -1,6 +1,7 @@
 import { nativeProvider } from "./native.js";
 import { biomeRegistry } from "./catalog.js";
 import { loadProviders, findProvider } from "./packs.js";
+import { validateResources } from "./resources.js";
 const installed = loadProviders();
 installed.catch(() => {});
 let epoch = 0,
@@ -32,7 +33,7 @@ async function drain() {
       if (job.epoch !== epoch) continue;
       const { id, action, query, signal } = job;
       try {
-        if (!["sampleBiomes", "predictStructures"].includes(action))
+        if (!["sampleBiomes", "predictStructures", "predictResources"].includes(action))
           throw new Error("未知计算请求");
         const providers = await installed;
         if (signal.aborted) continue;
@@ -40,7 +41,8 @@ async function drain() {
           findProvider(providers, query.dimension, action) || nativeProvider;
         if (typeof provider[action] !== "function")
           throw new Error("函数包未实现所声明的功能");
-        const result = await provider[action](query, { signal });
+        let result = await provider[action](query, { signal });
+        if(action === "predictResources") result=validateResources(result,query.mode);
         if (job.epoch !== epoch || signal.aborted) continue;
         const palette =
           action === "sampleBiomes" && result !== null

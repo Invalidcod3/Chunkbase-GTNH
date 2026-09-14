@@ -16,6 +16,37 @@ def module(name):
 
 
 class RuntimeToolsTest(unittest.TestCase):
+    def test_query_preserves_dimension_full_seed_and_read_only_boundary(self):
+        client=module('worker-query')
+        with tempfile.TemporaryDirectory(dir=ROOT/'.test-work') as directory:
+            config=Path(directory)/'config';config.mkdir()
+            (config/'amidstgtnhworker.cfg').write_text('S:token=test-secret\n','utf-8')
+            connection=MagicMock();connection.__enter__.return_value=connection
+            connection.makefile.return_value=io.BytesIO(b'{"ok":true,"token":"test-secret","nested":{"token":"test-secret"}}\n')
+            with patch.object(client.socket,'create_connection',return_value=connection):
+                result=client.query(directory,'prospecting',9007199254740993,dimension=-1,marker_mode='FLUID',width=512,height=512)
+            request=json.loads(connection.sendall.call_args.args[0])
+            self.assertEqual((request['dimension'],request['seed'],request['markerMode']),(-1,9007199254740993,'FLUID'))
+            self.assertNotIn('test-secret',json.dumps(result))
+            for command in ['import_waypoints','delete','']:
+                with self.assertRaises(ValueError):client.query(directory,command)
+            with self.assertRaises(ValueError):client.query(directory,'prospecting',width=513)
+
+    def test_calibration_rejects_save_records_and_keeps_completed_cases(self):
+        collector=module('collect-calibration')
+        with tempfile.TemporaryDirectory(dir=ROOT/'.test-work') as directory:
+            output=Path(directory)/'result.json'
+            cases=[{'id':'catalog','command':'prospecting_catalog'},{'id':'fluid','command':'prospecting','seed':'9007199254740993'}]
+            replies=[{'ok':True},{'ok':True,'prospecting':{'deposits':[{'source':'CURRENT/INITIAL','currentAmounts':[True]}]}}]
+            with patch.object(collector.client,'query',side_effect=replies):
+                with self.assertRaisesRegex(ValueError,'Save records'):collector.collect('unused',{'schemaVersion':1,'cases':cases},output)
+            result=json.loads(output.read_text('utf-8'))
+            self.assertFalse(result['complete']);self.assertEqual(result['failedCase'],'fluid');self.assertEqual(len(result['cases']),1)
+            with patch.object(collector.client,'query',return_value={'ok':True}) as request:
+                result=collector.collect('unused',{'schemaVersion':1,'cases':cases},output)
+                self.assertTrue(result['complete']);self.assertEqual(request.call_args.kwargs['seed'],9007199254740993)
+            with self.assertRaises(ValueError):collector.collect('unused',{'schemaVersion':1,'cases':[{'id':'bad','command':'import_waypoints'}]},output)
+
     def test_probe_requires_successful_protocol_response(self):
         inspector=module('inspect-environment')
         with tempfile.TemporaryDirectory(dir=ROOT/'.test-work') as directory:

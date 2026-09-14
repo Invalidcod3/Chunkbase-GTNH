@@ -211,6 +211,9 @@ hr {
   font-size: 0.8125rem;
   padding-left: 0.4rem;
 }
+.layers input[type="search"], .layers input[type="number"], .layers select { min-width: 0; width: 100%; }
+#resource-controls label { display: block; font-size: 0.8rem; }
+.layers .mode-control { display: block; }
 .swatch {
   width: 11px;
   height: 11px;

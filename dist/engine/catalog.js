@@ -8,7 +8,7 @@ export const dimensions = [
     en: "Overworld",
     map: false,
     structures: true,
-    note: "RWG + BOP 底图尚未接入；当前仅显示要塞和废弃矿井预测。",
+    note: "RWG + BOP 底图需要本地函数包；支持要塞、矿井及按环境配置启用的模组结构预测。",
   },
   {
     key: "nether",
@@ -16,8 +16,8 @@ export const dimensions = [
     zh: "下界",
     en: "Nether",
     map: false,
-    structures: false,
-    note: "BOP 下界生成器尚未接入。",
+    structures: true,
+    note: "BOP 下界底图尚未接入；可显示下界要塞和按环境配置启用的模组结构。",
   },
   {
     key: "end",
@@ -180,6 +180,13 @@ export const kinds = {
   MINESHAFT: { zh: "废弃矿井", en: "Mineshaft", color: "#c8996c" },
   MOON_DUNGEON: { zh: "月球地牢", en: "Moon dungeon", color: "#e5c88d" },
   MOON_VILLAGE: { zh: "月球村庄", en: "Moon village", color: "#a3d89e" },
+  VILLAGE: { zh: "村庄候选", en: "Village candidate", color: "#d9b773" },
+  NETHER_FORTRESS: {zh:"下界要塞",en:"Nether fortress",color:"#a76d65"},
+  LOOTGAMES_DUNGEON: {zh:"LootGames 地牢",en:"LootGames dungeon",color:"#c69bdb"},
+  TINKERS_SLIME_ISLAND: {zh:"史莱姆空岛",en:"Slime island",color:"#74cad3"},
+  TINKERS_NETHER_SLIME_ISLAND: {zh:"下界史莱姆空岛",en:"Nether slime island",color:"#cc824e"},
+  AUTOMAGY_NETHER_SPIRE: {zh:"Automagy 下界尖塔",en:"Automagy Nether spire",color:"#d7917e"},
+  AE2_METEORITE: {zh:"AE2 陨石候选",en:"AE2 meteorite candidate",color:"#ada49e"},
   MARS_CAVERN: { zh: "火星洞穴", en: "Mars cavern", color: "#dfa58a" },
 };
 for (const key of ["mars", "ceres", "io", "enceladus", "proteus", "pluto"]) {

@@ -84,6 +84,11 @@
             ></label
           >
           <hr />
+          <label class="mode-control"><span data-i18n="markerMode">显示模式</span><select id="marker-mode" aria-label="显示模式"><option value="STRUCTURE" data-i18n="structures">结构</option><option value="ORES" data-i18n="ores">矿脉</option><option value="FLUID" data-i18n="fluids">地下流体</option></select></label>
+          <div id="resource-controls" hidden>
+            <label><span data-i18n="resourceSearch">名称／材料</span><input id="resource-search" type="search" aria-label="筛选资源名称或材料" /></label>
+            <label id="fluid-threshold"><span data-i18n="minimumFluid">最低初始产量 (L/Op)</span><input id="minimum-fluid" type="number" value="0" min="0" max="429496" step="1" /></label>
+          </div>
           <p class="muted" id="resource-status">矿脉与流体预测待接入</p>
         </details>
       </aside>
@@ -184,7 +189,7 @@
         <button aria-label="关闭">×</button>
       </form>
       <p data-i18n="exportNote">
-        仅导出当前维度、视野和筛选条件内的结构；不代表存档中实际生成的结果。
+        导出当前维度、视野、显示模式及筛选条件内的标记。流体按区块中心导出初始产量（L/Op）；不代表存档当前余量。
       </p>
       <label class="setting-row"
         ><span data-i18n="limit">最多坐标数</span
