@@ -7,8 +7,8 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.*;
 
-/** Read only initialized GT/VP registries on the existing Worker's tick queue.
- * No transforms, world access, terrain requests or saved prospecting records. */
+/** Capture initialized registries on the existing Worker's tick queue.
+ * Generation observers return null; calibration uses seed-only preview objects, never saved records. */
 public final class ResourceCapture {
     static Object field(Object owner,String name) throws Exception {
         Class<?> type=owner instanceof Class?(Class<?>)owner:owner.getClass();
@@ -97,6 +97,7 @@ public final class ResourceCapture {
             Files.write(out.resolve("resource-profile.json"),RuntimeProfileAgent.json(result).getBytes(StandardCharsets.UTF_8));
             SurfaceStructureCapture.capture(loader,out);
             AsteroidCapture.capture(loader,out);
+            TerrainCapture.capture(loader,out,instrumentation);
             return null;
         }});
         queue.add(task);

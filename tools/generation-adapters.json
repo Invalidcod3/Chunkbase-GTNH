@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "twilight": {
+    "com/mitchej123/hodgepodge/core/fml/hooks/mc/RandomAid": "4ba868862ef95f35a61160a401110e3479f31f5a5040af591f4f09d53a54c147",
+    "net/minecraft/world/gen/layer/GenLayer": "d4ab96a4ae3afdcef351f3558e842c6e449f807b18b18a22e63233912c1ec235",
+    "net/minecraft/world/gen/layer/GenLayerSmooth": "e00ac2184b750f1960bebf110e9337648bb0a93aa0749930838504b70b846a00",
+    "net/minecraft/world/gen/layer/GenLayerVoronoiZoom": "577219a8f17261fe7e19d2a3000123381f5253d6cefb7b1e5b1eee75dfc9631d",
+    "net/minecraft/world/gen/layer/GenLayerZoom": "3056cab83b63e53254065e5a8c21f94f3bc1c9f60d1c2bd73d0090f31b20c91b",
+    "twilightforest/world/layer/GenLayerTF": "f4de5994201e8e30d1d8d8dfe8049b800f2bf559f66af94d45cfb6514bd2d205",
+    "twilightforest/world/layer/GenLayerTF5x5Preset": "79ca9e27aa209d4f8dff0b1582dac28b73d33483eec04ff502c3eaaa0f1f5d09",
+    "twilightforest/world/layer/GenLayerTF6x6Preset": "9fe6a1b75390534f691a18c1086cf18e7b38569ea69b6e7ecbf867ebc48d985d",
+    "twilightforest/world/layer/GenLayerTF7x7Preset": "241d802a127132c79340d6d9acfab645e6a667c6f27907d47dc818fcfa77125b",
+    "twilightforest/world/layer/GenLayerTFBiomeBorders": "23b2c416b12347dc836a68dcf8cc59d815b1a41e341e9ee05ef25423af8f6f27",
+    "twilightforest/world/layer/GenLayerTFBiomeStabilize": "1eae6c4b1a13f57f50001613c450c8c6b5c27748e81887a2193d90d677a23801",
+    "twilightforest/world/layer/GenLayerTFBiomes": "442a69c9e95999881ccc543cf5e5fd8bba4b7918f7889ff1b755c4e52e7ed5a4",
+    "twilightforest/world/layer/GenLayerTFBiomes1Point7": "5865553f6fc7effefebfdd0493db31c36feba900186d0bcac3a63db94d2d6437",
+    "twilightforest/world/layer/GenLayerTFCheckBad": "2e4ab6e61f8b15234f70d287912c1d2a2f6fedf935ae41e34892709ee4684970",
+    "twilightforest/world/layer/GenLayerTFCompanionBiomes": "bc70430165d7125a4aab3cefdddd0e2f2b9ff1c9502242bbbcf6747b45b45fb0",
+    "twilightforest/world/layer/GenLayerTFFeatureZoom": "3b962948b20e38453dc039931b71a27bb76b6614ef10d06acc34b300145cf5d8",
+    "twilightforest/world/layer/GenLayerTFKeyBiomes": "02b4d8f43dcb724b414813eec1f0a4d509636ebfd8650a73af4127108ef27f75",
+    "twilightforest/world/layer/GenLayerTFRiverMix": "a2261208d198639a8da8bdb648c2922849be0d08125d223c99694dd4f0c2421a",
+    "twilightforest/world/layer/GenLayerTFStream": "344bd7429f2b627d7c1e157ae950b1e407d442735cd22bc1986ef17834a9c33e",
+    "twilightforest/world/layer/GenLayerTFThornBorder": "97aafc3e71018e190e09698ae780ee9eaa798ea07193b068d912c8d9b9e561c1"
+  },
+  "caves": {
+    "com/mitchej123/hodgepodge/util/StdLCG": "028e82608b00ef818b4b77d5f4c475ffe076c6054a2e00efa05be68bc67ef6f3",
+    "net/minecraft/util/MathHelper": "e170bc27da538afcd7ce251866565a8d04a17670fc11cdc6277b99f3519c11f2",
+    "net/minecraft/world/gen/MapGenBase": "c1aa203f14203ff79e47f4e3f7595da2ad275243e22f5846538c674ae07ce4f4",
+    "net/minecraft/world/gen/MapGenCaves": "c5c03a4f3b98003c3d6c4aac9d03d9c689e6d76c2b79176a83676f915799f9d1"
+  }
+}

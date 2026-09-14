@@ -2,6 +2,7 @@ import { parseSeed } from "./random.js";
 import { biomeRegistry } from "./catalog.js";
 import { rwgStructures } from "./rwg-structures.js";
 import { surfaceStructures, validateSurfaceProfile } from "./surface-structures.js";
+import { createDungeonPredictor } from "./dungeons.js";
 
 // The site installs a calibrated engine and its environment-specific palette.
 // Calls are serialized by engine/worker.js; the engine owns mutable Java state.
@@ -16,6 +17,7 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
   const chunks = new Map();
   const rawChunks = new Map();
   const surfaceProfile = options.surfaceProfile ? validateSurfaceProfile(options.surfaceProfile) : null;
+  const dungeons=options.caveEngine?createDungeonPredictor(options.caveEngine,options.dungeonProfile,(x,z)=>engine.rawHeight(x,z),{yieldTask,now}):null;
   function rawChunk(cx,cz) {
     const key=`${cx}:${cz}`;
     if(!rawChunks.has(key)) {
@@ -49,6 +51,11 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
         const cx=Math.floor(x/16),cz=Math.floor(z/16);
         return rawChunk(cx,cz)[(z-cz*16)*16+x-cx*16];
       },surfaceProfile,{signal,yieldTask,now}));
+      if(dungeons&&!q.excludedKinds?.includes('VANILLA_SPAWNER_DUNGEON')) {
+        const b=q.bounds,margin=144;
+        const nearby=await rwgStructures({...q,bounds:{minX:Math.max(-30000000,b.minX-margin),minZ:Math.max(-30000000,b.minZ-margin),maxX:Math.min(30000000,b.maxX+margin),maxZ:Math.min(30000000,b.maxZ+margin)}},(x,z)=>engine.villageViable(x,z),{signal,yieldTask});
+        result.push(...await dungeons(q,nearby,{signal}));
+      }
       return result;
     },
     async sampleBiomes(q, { signal } = {}) {

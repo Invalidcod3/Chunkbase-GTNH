@@ -99,7 +99,7 @@ export function journeyMap(markers, context, y = 64) {
         const id = `${m.kind}_${m.x}_${m.z}`,
           value = {
             id,
-            name: `${m.name || m.kind}${m.amount===undefined?'':` ${m.amount} L/Op`} (${m.certainty})`,
+            name: `${m.name || (m.kind==='TWILIGHT_FEATURE'?m.subtype:m.kind)}${m.kind==='VANILLA_SPAWNER_DUNGEON'?` [Y: ${m.subtype}]`:''}${m.amount===undefined?'':` ${m.amount} L/Op`} (${m.certainty})`,
             icon: "waypoint-normal.png",
             x: m.x,
             y,

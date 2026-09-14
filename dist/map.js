@@ -1,4 +1,4 @@
-import { biomeByIndex } from "./engine/catalog.js";
+import { biomeByIndex, markerTypeKey } from "./engine/catalog.js";
 import { resourceMatches } from "./engine/resources.js";
 import { drawResources, hitResource } from "./resource-view.js";
 export class MapView {
@@ -37,7 +37,7 @@ export class MapView {
     this.smooth = false;
     this.velocity = { x: 0, z: 0 };
     this.pointers = new Map();
-    this.filtered = new Set(['THAUMCRAFT_AURA_NODE','THAUMCRAFT_ELDRITCH_ALTAR']);
+    this.filtered = new Set(['THAUMCRAFT_AURA_NODE','THAUMCRAFT_ELDRITCH_ALTAR','VANILLA_SPAWNER_DUNGEON']);
     this.width = 0;
     this.height = 0;
     this.lastFrame = 0;
@@ -382,7 +382,7 @@ export class MapView {
     }
   }
   visibleMarkers() {
-    return this.markers.filter((m) => !this.filtered.has(m.kind));
+    return this.markers.filter((m) => !this.filtered.has(m.kind) && !this.filtered.has(markerTypeKey(m)));
   }
   visibleResources() {
     return this.resources.filter(d=>resourceMatches(d,this.resourceFilter));

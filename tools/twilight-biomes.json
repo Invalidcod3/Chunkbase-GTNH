@@ -1,0 +1,21 @@
+{
+  "clearing":["twilightforest:clearing","暮色空地"],
+  "darkForest":["twilightforest:dark_forest","黑暗森林"],
+  "darkForestCenter":["twilightforest:dark_forest_center","黑暗森林中心"],
+  "deepMushrooms":["twilightforest:deep_mushrooms","深层蘑菇森林"],
+  "enchantedForest":["twilightforest:enchanted_forest","魔法森林"],
+  "fireSwamp":["twilightforest:fire_swamp","烈焰沼泽"],
+  "fireflyForest":["twilightforest:firefly_forest","萤火虫森林"],
+  "glacier":["twilightforest:glacier","暮色冰川"],
+  "highlands":["twilightforest:highlands","暮色高地"],
+  "highlandsCenter":["twilightforest:highlands_center","高地中心"],
+  "mushrooms":["twilightforest:mushrooms","蘑菇森林"],
+  "oakSavanna":["twilightforest:oak_savanna","橡树草原"],
+  "stream":["twilightforest:stream","暮色溪流"],
+  "tfLake":["twilightforest:lake","暮色湖泊"],
+  "tfSnow":["twilightforest:snowy_forest","积雪森林"],
+  "tfSwamp":["twilightforest:swamp","暮色沼泽"],
+  "thornlands":["twilightforest:thornlands","荆棘之地"],
+  "twilightForest":["twilightforest:twilight_forest","暮色森林"],
+  "twilightForest2":["twilightforest:dense_forest","茂密暮色森林"]
+}

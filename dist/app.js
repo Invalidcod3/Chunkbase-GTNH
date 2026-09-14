@@ -6,6 +6,8 @@ import {
   biomeRegistry,
   kinds,
   certainty,
+  twilightFeatures,
+  markerTypeKey,
 } from "./engine/catalog.js";
 import { parseSeed } from "./engine/random.js";
 import { csv, resourceCsv, journeyMap, download } from "./export.js";
@@ -112,6 +114,7 @@ const assetNames = {
   MOON_DUNGEON: "galacticraft_moon_dungeon_brick",
   MOON_VILLAGE: "galacticraft_alien_villager",
   VILLAGE: "village",
+  VANILLA_SPAWNER_DUNGEON: "vanilla_spawner_dungeon",
   NETHER_FORTRESS: "nether_fortress",
   LOOTGAMES_DUNGEON: "lootgames_dungeon",
   TINKERS_SLIME_ISLAND: "tinkers_blue_slime_ball",
@@ -136,6 +139,7 @@ const assetNames = {
   PROTEUS_DUNGEON: "galaxyspace_proteus_dungeon_brick",
   PLUTO_DUNGEON: "galaxyspace_pluto_dungeon_brick",
 };
+for(const [key,,,id] of twilightFeatures)assetNames[`TWILIGHT_FEATURE:${key}`]=`twilight_feature_${String(id).padStart(2,'0')}`;
 for (const [kind, name] of Object.entries(assetNames)) {
   const image = new Image();
   image.onload = () => (view.dirty = true);
@@ -229,7 +233,7 @@ async function refreshStructures(bounds) {
     });
     if (revision !== structureRevision || world !== worldRevision) return;
     if(resourceMode){view.resources=result||[];view.markers=[];resourceStatus(result!==null);}
-    else {view.markers = result.map((m) => ({ ...m, color: kinds[m.kind]?.color }));view.resources=[];}
+    else {view.markers = result.map((m) => ({ ...m, color: kinds[markerTypeKey(m)]?.color }));view.resources=[];}
     loadedBounds = bounds;
     view.dirty = true;
     renderFilters();
@@ -249,7 +253,7 @@ async function refreshStructures(bounds) {
 function renderFilters() {
   const counts = new Map();
   for (const m of view.markers)
-    counts.set(m.kind, (counts.get(m.kind) || 0) + 1);
+    counts.set(markerTypeKey(m), (counts.get(markerTypeKey(m)) || 0) + 1);
   const optionalKinds=dimensions.find(d=>d.key===dimension)?.structureKinds||[];
   for(const kind of optionalKinds)if(!counts.has(kind))counts.set(kind,0);
   $("kind-filters").replaceChildren(
@@ -263,7 +267,12 @@ function renderFilters() {
         input.checked ? view.filtered.delete(kind) : view.filtered.add(kind);
         view.dirty = true;
         updateCount();
-        if(optionalKinds.includes(kind))loadWorld();
+        if(optionalKinds.includes(kind)) {
+          // Only the landmark query changed. Keep completed biome tiles visible.
+          workerClient.reset();
+          loadedBounds = null;
+          void refreshStructures(view.bounds());
+        }
       };
       const swatch = document.createElement("span");
       swatch.className = "swatch";
@@ -285,7 +294,7 @@ function showDetail(marker, point) {
   if(marker?.amounts)selectedPoint={x:Math.floor(point.x/16)*16+8,z:Math.floor(point.z/16)*16+8};
   $("detail").hidden = false;
   $("detail-title").textContent = marker
-    ? marker.name || kinds[marker.kind]?.[language] || marker.kind
+    ? marker.name || kinds[markerTypeKey(marker)]?.[language] || marker.kind
     : language === "zh"
       ? "地图坐标"
       : "Map coordinates";
@@ -293,7 +302,7 @@ function showDetail(marker, point) {
   if (marker) {
     if(marker.kind==='ORE_VEIN')lines.push(`Y: ${marker.minY}–${marker.maxY}`,marker.materials||'',language==='zh'?'种子预测候选':'Seed candidate');
     if(marker.amounts){const i=Math.floor((point.x-marker.x)/16)*8+Math.floor((point.z-marker.z)/16);lines.push(`${marker.amounts[i]} L/Op · ${language==='zh'?'初始产量':'initial production'}`);}
-    if (marker.subtype) lines.push(marker.subtype);
+    if (marker.subtype) lines.push(marker.kind==='VANILLA_SPAWNER_DUNGEON'?`Y: ${marker.subtype}`:marker.subtype);
     lines.push(
       language === "zh"
         ? certainty[marker.certainty] || marker.certainty
@@ -488,7 +497,7 @@ async function exportView(format) {
     if (revision !== worldRevision) throw new Error("地图已切换，请重新导出");
     if(all===null)throw new Error('此资源图层尚未接入函数包');
     const filtered = (resourceMode?resourcePoints(all,view.resourceFilter,bounds):all)
-        .filter((m) => !view.filtered.has(m.kind))
+        .filter((m) => !view.filtered.has(m.kind) && !view.filtered.has(markerTypeKey(m)))
         .sort((a, b) => a.z - b.z || a.x - b.x || a.kind.localeCompare(b.kind)),
       markers = filtered.slice(0, limit);
     if (!markers.length)

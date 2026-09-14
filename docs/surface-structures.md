@@ -36,4 +36,4 @@ node tools/serve.mjs --rwg-preview
 
 候选状态原来被网页绘成额外灰色虚线框，已删除；状态仍在详情和导出里。村庄 PNG 实际为 20×26，原代码将所有图标拉伸为 16×16；现在与 Amidst 一样以图片原始宽高居中绘制，资源图标也保持宽高比。素材自身的像素描边以及选中时的提示仍保留。
 
-尚未补齐的结构包括原版刷怪笼、暮色特征等。末地矿物小行星已另行接入，见 [asteroids.md](asteroids.md)。默认静态／源码包不含实际运行时设置，本地完整预览仍在 `private-packs/`。
+原版刷怪笼及暮色特征已另行接入，见 [twilight-and-dungeons.md](twilight-and-dungeons.md)；末地矿物小行星见 [asteroids.md](asteroids.md)。默认静态／源码包不含实际运行时设置，本地完整预览仍在 `private-packs/`。

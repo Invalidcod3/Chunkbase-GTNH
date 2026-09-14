@@ -184,6 +184,7 @@ export const kinds = {
   MOON_DUNGEON: { zh: "月球地牢", en: "Moon dungeon", color: "#e5c88d" },
   MOON_VILLAGE: { zh: "月球村庄", en: "Moon village", color: "#a3d89e" },
   VILLAGE: { zh: "村庄候选", en: "Village candidate", color: "#d9b773" },
+  VANILLA_SPAWNER_DUNGEON: {zh:"刷怪笼候选",en:"Spawner dungeon candidate",color:"#a5a5a5"},
   NETHER_FORTRESS: {zh:"下界要塞",en:"Nether fortress",color:"#a76d65"},
   LOOTGAMES_DUNGEON: {zh:"LootGames 地牢",en:"LootGames dungeon",color:"#c69bdb"},
   TINKERS_SLIME_ISLAND: {zh:"史莱姆空岛",en:"Slime island",color:"#74cad3"},
@@ -204,9 +205,21 @@ for (const key of ["mars", "ceres", "io", "enceladus", "proteus", "pluto"]) {
   };
 }
 export const certainty = {
+  EXACT: "种子定位",
   POSSIBLE: "候选位置",
   EXPECTED: "预期位置",
   EXACT_FRESH_END: "全新末地位置",
   EXACT_CONFIG: "按配置计算",
   RECORDED: "存档记录",
 };
+export const twilightFeatures=[
+  ['SMALL_HOLLOW_HILL','小型矿山','Small Hollow Hill',1],['MEDIUM_HOLLOW_HILL','中型矿山','Medium Hollow Hill',2],['LARGE_HOLLOW_HILL','大型矿山','Large Hollow Hill',3],
+  ['HEDGE_MAZE','树篱迷宫','Hedge Maze',4],['NAGA_COURTYARD','娜迦庭院','Naga Courtyard',5],['LICH_TOWER','巫妖塔','Lich Tower',6],
+  ['ICE_TOWER','极光宫殿','Ice Tower',7],['QUEST_ISLAND','任务岛','Quest Island',8],['QUEST_GROVE','任务树丛','Quest Grove',9],
+  ['DRUID_GROVE','德鲁伊树丛','Druid Grove',10],['FLOATING_RUINS','浮空遗迹','Floating Ruins',11],['HYDRA_LAIR','九头蛇巢穴','Hydra Lair',12],
+  ['LABYRINTH','地下迷宫','Labyrinth',13],['DARK_TOWER','黑暗高塔','Dark Tower',14],['KNIGHT_STRONGHOLD','骑士要塞','Knight Stronghold',15],
+  ['WORLD_TREE','世界树','World Tree',16],['YETI_LAIR','雪怪巢穴','Yeti Lair',17],['TROLL_LAIR','巨魔洞窟','Troll Lair',18],
+  ['FINAL_CASTLE','最终城堡','Final Castle',19],['MUSHROOM_TOWER','蘑菇塔','Mushroom Tower',20],
+];
+for(const [key,zh,en] of twilightFeatures)kinds['TWILIGHT_'+key]={zh,en,color:'#b8c785'};
+export const markerTypeKey=m=>m.kind==='TWILIGHT_FEATURE'?'TWILIGHT_'+m.subtype:m.kind;

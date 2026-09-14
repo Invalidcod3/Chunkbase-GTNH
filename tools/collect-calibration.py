@@ -14,7 +14,7 @@ def collect(instance, plan, output):
     if plan.get('schemaVersion')!=1 or not isinstance(plan.get('cases'),list) or not 1<=len(plan['cases'])<=4096:
         raise ValueError('Invalid calibration plan')
     names=set()
-    allowed={'id','command','seed','x','z','width','height','step','dimension','dimension_key','marker_mode','structure_group'}
+    allowed={'id','command','seed','x','z','width','height','step','dimension','dimension_key','marker_mode','structure_group','vanilla_dungeons'}
     for case in plan['cases']:
         if not isinstance(case,dict) or set(case)-allowed or not isinstance(case.get('id'),str) or case['id'] in names:
             raise ValueError('Invalid or duplicate calibration case')
