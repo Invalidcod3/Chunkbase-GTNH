@@ -32,9 +32,10 @@ def capture(instance, pid):
     profile=output/'resource-profile.json'
     mods=Path(instance)/'.minecraft/mods'
     fingerprints={}
-    for pattern in ['gregtech-*.jar','galacticgreg-*.jar','visualprospecting-*.jar','Amidst*.jar','amidst*.jar']:
+    for pattern in ['gregtech-*.jar','galacticgreg-*.jar','visualprospecting-*.jar','Amidst*.jar','amidst*.jar','roguelike-*.jar','Thaumcraft*.jar','HardcoreEnderExpansion*.jar','Draconic-Evolution*.jar']:
         for jar in mods.glob(pattern):fingerprints[jar.name]=hashlib.sha256(jar.read_bytes()).hexdigest()
     receipt={'schemaVersion':1,'profileSha256':hashlib.sha256(profile.read_bytes()).hexdigest(),'sourceJars':fingerprints,'scope':'initialized configuration and display textures only; no save data'}
+    receipt['profiles']={name:hashlib.sha256((output/name).read_bytes()).hexdigest() for name in ['resource-profile.json','surface-structure-profile.json','asteroid-profile.json','asteroid-oracle.json']}
     (output/'resource-capture-receipt.json').write_text(json.dumps(receipt,indent=2),'utf-8')
     print('Captured private resource profile. Recalibrate before building the browser pack.')
 

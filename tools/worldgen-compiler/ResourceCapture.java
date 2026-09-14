@@ -96,6 +96,7 @@ public final class ResourceCapture {
                 "orePattern",pattern.equals("EQUAL_SPACING")?pattern:"LEGACY","runtimeOrePattern",pattern,"dimensions",dimensions,"ores",metadata);
             Files.write(out.resolve("resource-profile.json"),RuntimeProfileAgent.json(result).getBytes(StandardCharsets.UTF_8));
             SurfaceStructureCapture.capture(loader,out);
+            AsteroidCapture.capture(loader,out);
             return null;
         }});
         queue.add(task);

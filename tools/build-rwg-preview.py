@@ -46,7 +46,12 @@ def checked_report(name):
     return report
 
 
-def build(resources=False,surface=False):
+def build(resources=False,surface=False,asteroids=False):
+    # Validate every optional input before replacing any currently served preview files.
+    surface_report=checked_report('surface-structures-validation.json') if surface else None
+    asteroid_report=checked_report('asteroid-validation.json') if asteroids else None
+    live_structures=checked_report('live-structures-validation.json') if resources else None
+    validation=checked_report('resource-validation.json') if resources else None
     pack=ROOT/'private-packs/rwg-terrain-browser'
     profile=json.loads((pack/'profile.json').read_text('utf-8'))
     manifest=json.loads((pack/'manifest.json').read_text('utf-8'))
@@ -88,7 +93,6 @@ def build(resources=False,surface=False):
     installed=out/'packs/rwg';installed.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(pack/'selection.js',installed/'selection.js')
     config={'noise':profile['noise'],'groups':profile['groups']}
-    surface_report=checked_report('surface-structures-validation.json') if surface else None
     surface_options='{}'
     surface_load=''
     if surface:
@@ -98,16 +102,27 @@ def build(resources=False,surface=False):
     elif (installed/'surface-profile.json').is_file():
         (installed/'surface-profile.json').unlink()
     (installed/'provider.js').write_text('import * as engine from "./selection.js";\nimport {createRwgProvider} from "../../engine/rwg-provider.js";\n'+surface_load+'export const provider=createRwgProvider(engine,'+json.dumps(config)+','+json.dumps(keys)+','+surface_options+');\n','utf-8')
-    live_structures=checked_report('live-structures-validation.json') if resources else None
     note='RWG + BOP 底图已校准；村庄及已接入模组结构通过实例样本对照。未包含存档修改。' if live_structures else 'RWG + BOP 底图已校准；村庄候选通过原 Java 离线对照，待实例复核。未包含存档修改。'
     descriptor={'id':'local-rwg-calibrated','apiVersion':1,'browserExecutable':True,'entry':'./rwg/provider.js',
                 'dimensions':[{'key':'overworld','capabilities':['biomes','structures'],'note':note}], 'biomes':biomes}
     packs=[descriptor]
+    asteroid_output=out/'packs/asteroids'
+    if asteroids:
+        asteroid_output.mkdir(parents=True,exist_ok=True)
+        shutil.copyfile(ROOT/'private-packs/runtime-session/asteroid-profile.json',asteroid_output/'profile.json')
+        (asteroid_output/'provider.js').write_text('import {createAsteroidProvider} from "../../engine/asteroids.js";\nconst response=await fetch(new URL("./profile.json",import.meta.url));\nif(!response.ok)throw new Error("Cannot load asteroid profile");\nexport const provider=createAsteroidProvider(await response.json());\n','utf-8')
+        (asteroid_output/'provenance.json').write_text(json.dumps(asteroid_report,indent=2),'utf-8')
+        packs.append({'id':'local-asteroids-calibrated','apiVersion':1,'browserExecutable':True,'entry':'./asteroids/provider.js',
+            'dimensions':[{'key':'end','capabilities':['structures'],'structureKinds':['END_NAQUADAH_ASTEROID','END_SCHEELITE_ASTEROID','END_PLATINUM_ASTEROID'],
+            'note':'已接入硅岩、白钨矿和铂小行星。按输入种子及全新末地计算，避开中央岛、HEE 岛屿范围和混沌岛；不读取存档或末影龙击杀记录。'}]})
+    elif asteroid_output.exists():
+        expected=ROOT.resolve()/'private-packs/rwg-local-preview/packs/asteroids'
+        if asteroid_output.is_symlink() or asteroid_output.resolve()!=expected:raise ValueError('Unexpected asteroid output path')
+        shutil.rmtree(asteroid_output)
     if surface:
         descriptor['dimensions'][0]['structureKinds']=['ROGUELIKE_DUNGEON','THAUMCRAFT_AURA_NODE','THAUMCRAFT_ELDRITCH_ALTAR']
         descriptor['dimensions'][0]['note']+=' Roguelike 地牢已接入；可勾选灵气节点和邪术祭坛进行扫描。'
     if resources:
-        validation=checked_report('resource-validation.json')
         resource_profile=json.loads((ROOT/'private-packs/runtime-session/resource-profile.json').read_text('utf-8'))
         environment=json.loads((ROOT/'dist/environment.json').read_text('utf-8'))
         dimension_ids=environment['dimensionIds']
@@ -132,6 +147,7 @@ def build(resources=False,surface=False):
     notice+='\n\n本地环境校准预览：已接入 RWG + BOP 主世界底图，含实际环境中的 Thaumcraft 群系。计算函数来自当前实例的 RWG 字节码；混合缓存来自原 Amidst-GTNH Worker。配色直接运行参考 Amidst 的默认配色方法得到。命名空间为本工具声明的旧群系别名，保留实际类来源。此包未完成上游代码再分发许可审查，不自动公开发布。\n'
     if resources:notice+='\n本地资源包已接入当前界面的 11 个维度。GregTech / GalacticGreg 决定矿脉与地下流体，Visual Prospecting 提供显示名称、颜色和图标。已通过 41 维度的实例预测对照；所有结果仅为种子候选或初始产量，不包含存档当前余量。未配置流体的维度明确显示无配置。\n'
     if surface:notice+='\nRoguelike 地牢、Thaumcraft 灵气节点和邪术祭坛已按当前实例初始化设置接入，并通过实际 Worker 样本校准。节点／祭坛需要勾选图层后扫描，默认关闭以减少密集地形计算。树木等会消耗不确定随机数的区块沿用原 Worker 规则省略。\n'
+    if asteroids:notice+='\n末地矿物小行星使用当前 GalacticGreg 初始化权重，在浏览器中复现原 Worker 选择器；避让范围以输入种子的全新末地重建。旧 Worker 的 HEE 避让依赖当前已加载世界，浏览器结果可能与其他存档或末影龙重生后的末地不同。\n'
     (out/'NOTICE.md').write_text(notice,'utf-8')
     with zipfile.ZipFile(ROOT/'private-packs/amidst-gtnh-rwg-local-preview.zip','w',zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(out.rglob('*')):
@@ -143,4 +159,5 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--resources',action='store_true',help='Include the explicitly calibrated private resource profile')
     parser.add_argument('--surface',action='store_true',help='Include calibrated Roguelike and Thaumcraft surface structure settings')
-    args=parser.parse_args();build(args.resources,args.surface)
+    parser.add_argument('--asteroids',action='store_true',help='Include calibrated private End asteroid settings')
+    args=parser.parse_args();build(args.resources,args.surface,args.asteroids)

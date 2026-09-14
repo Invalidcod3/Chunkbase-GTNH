@@ -14,6 +14,8 @@
 
 新增村庄、下界要塞、LootGames、Tinkers' Construct、AE2 及尖塔标记同样沿用参考项目中的对应图标；Automagy 尖塔与旧图一致使用 Thaumcraft 祭坛图标。资源绘制规则移植自参考项目的 `ProspectingOverlay`。资源算法依据原 Worker / GregTech 的预测规则；维护者私有包中的配置来自 GregTech / GalacticGreg，名称、配色和纹理由 Visual Prospecting 提供。默认分发包不包含该运行时资源目录或纹理。
 
+末地小行星使用参考项目中的 GregTech 硅岩粉、白钨矿粉和铂粉标记。私有小行星包读取 GalacticGreg 初始化的矿物权重，并按输入种子的全新末地计算岛屿避让；默认包不包含这套实际配置。原 Worker 的 HEE 避让读取已加载世界，可能与输入种子的全新末地不同。
+
 | 来源 | 当前用途 | 授权核对入口 |
 | --- | --- | --- |
 | Minecraft / Amidst | 要塞、矿井、末影之眼、程序图标 | [Minecraft EULA](https://www.minecraft.net/eula)、原项目 |

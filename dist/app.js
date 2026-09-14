@@ -99,6 +99,9 @@ const view = new MapView($("map-canvas"), {
 });
 const assetNames = {
   DRACONIC_CHAOS_ISLAND: "draconic_chaotic_core",
+  END_NAQUADAH_ASTEROID: "gregtech_naquadah_dust_highlighted",
+  END_SCHEELITE_ASTEROID: "gregtech_scheelite_dust",
+  END_PLATINUM_ASTEROID: "gregtech_platinum_dust",
   MARS_CAVERN: "galacticraft_mars_cavern_vine",
   HEE_DUNGEON_TOWER: "ender_eye",
   INFESTED_FOREST: "hee_infested_endstone_side",
