@@ -13,6 +13,7 @@ export function csv(markers, context) {
         "subtype",
         "x",
         "z",
+        "y",
         "certainty",
         "source",
       ],
@@ -24,6 +25,7 @@ export function csv(markers, context) {
         m.subtype,
         m.x,
         m.z,
+        m.y,
         m.certainty,
         m.source,
       ]),
@@ -33,8 +35,8 @@ export function csv(markers, context) {
   );
 }
 export function resourceCsv(markers,context){
-  const rows=[['seed','dimension_key','dimension_id','kind','resource_id','name','materials','x','z','min_y','max_y','initial_l_per_op','source'],
-    ...markers.map(m=>[context.seed,context.dimension,context.dimensionId,m.kind,m.id,m.name,m.materials,m.x,m.z,m.minY,m.maxY,m.amount,m.source])];
+  const rows=[['seed','dimension_key','dimension_id','kind','resource_id','name','materials','x','z','y','size','min_y','max_y','initial_l_per_op','source','certainty'],
+    ...markers.map(m=>[context.seed,context.dimension,context.dimensionId,m.kind,m.id,m.name,m.materials,m.x,m.z,m.y,m.size,m.minY,m.maxY,m.amount,m.source,m.certainty])];
   return '\ufeff'+rows.map(row=>row.map(escapeCsv).join(',')).join('\r\n');
 }
 export function crc32(data) {
@@ -96,13 +98,14 @@ export function journeyMap(markers, context, y = 64) {
   return zipStore(
     markers
       .map((m, i) => {
-        const id = `${m.kind}_${m.x}_${m.z}`,
+        const identity=JSON.stringify([String(context.seed),context.dimension,context.dimensionId,m.kind,m.id||m.subtype||'',m.x,m.y??null,m.z]);
+        const id = `${context.dimensionId}_${m.kind}_${m.x}_${m.z}_${crc32(encoder.encode(identity)).toString(16)}`,
           value = {
             id,
             name: `${m.name || (m.kind==='TWILIGHT_FEATURE'?m.subtype:m.kind)}${m.kind==='VANILLA_SPAWNER_DUNGEON'?` [Y: ${m.subtype}]`:''}${m.amount===undefined?'':` ${m.amount} L/Op`} (${m.certainty})`,
             icon: "waypoint-normal.png",
             x: m.x,
-            y,
+            y: (m.kind==='WORLD_SPAWN'&&m.status==='RECORDED'||['ASTEROID_SMALL','ASTEROID_VEIN'].includes(m.kind)||m.kind?.startsWith('END_')&&m.kind.endsWith('_ASTEROID'))&&Number.isInteger(m.y)?m.y:y,
             z: m.z,
             r: 220,
             g: 192,
@@ -120,7 +123,7 @@ export function journeyMap(markers, context, y = 64) {
       .concat([
         [
           "README.txt",
-          `Seed: ${context.seed}\nDimension: ${context.dimension} (${context.dimensionId})\nCopy the JSON files into the matching JourneyMap world waypoint directory.\nPredictions only; Y=${y} is user supplied, not sampled terrain height.\n`,
+          `Seed: ${context.seed}\nDimension: ${context.dimension} (${context.dimensionId})\nCopy the JSON files into the matching JourneyMap world waypoint directory.\nAsteroids use their predicted centre Y; recorded spawn uses its saved Y. Other points use the supplied Y=${y}, not sampled terrain height. EXACT_FRESH_END assumes a fresh End; it does not include saved island or dragon state.\n`,
         ],
       ]),
   );

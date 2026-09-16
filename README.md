@@ -1,97 +1,74 @@
-# Amidst GTNH Web
+# Chunkbase GTNH
 
-可打包的静态网页开发版。计算在浏览器的 Web Worker 中进行，没有应用后端、外部脚本或 CDN 依赖。导航栏与地图分开，地图沿用 Amidst 的末地配色、图标、鼠标中心缩放和图层交互；后续可根据 Illustrator 设计替换外围界面。
+面向 GregTech: New Horizons 的浏览器种子地图。提供生物群系、结构、矿脉与流体筛选；地图计算在浏览器内完成，无需应用后端。
 
-**这还不是完整 Amidst + Worker 的替代品。** 当前支持与未完成部分均在网页“来源”中显示；不会用随机噪声或其他维度冒充未接入的底图。
+- [文档索引](docs/index.md)
 
-## 本地运行与打包
+## 功能
 
-需要 Node.js 22 或更新版本，无需安装依赖：
+- 完整校准包包含 GTNH 2.9.0-beta-3 环境的 42 个维度底图与 41 个资源维度。
+- 兴趣点、矿脉、流体、生物群系筛选，Roguelike 地牢按八种类型独立筛选。
+- Amidst 风格图标、坐标网格与点位信息；双击 X/Z 编辑坐标并跳转。
+- GPU 加速、计算线程数与算力分配设置；中文和英文界面。
+- 深色界面、可折叠筛选面板、浏览器本地偏好保存；窄屏仅作基础适配。
 
-```sh
-node tools/serve.mjs
-node --test tests/*.test.mjs
-node tools/check.mjs
-node tools/build.mjs
-```
+预测基于所附环境的生成规则，不能保证与不同模组版本、配置、已生成区块或存档修改一致。部分结构显示候选位置。导出与存档导入的底层代码保留，当前界面暂不提供入口。
 
-预览地址为 `http://127.0.0.1:4173/`。打包结果是 `artifacts/amidst-gtnh-web-static.zip`，将其解压到任意静态 HTTP 服务即可；对应源码包是 `artifacts/amidst-gtnh-web-source.zip`。支持部署在子目录；不支持双击 `index.html` 的 `file://` 方式（模块与 Web Worker 需要 HTTP）。不自动发布。有 npm 的环境也可使用 package.json 中对应的脚本。
+## 本地开发
 
-## 当前范围
-
-| 能力                                              | 状态                                           |
-| ------------------------------------------------- | ---------------------------------------------- |
-| 64 位种子、Java Random、负坐标                    | 已移植；与 Java 对照                           |
-| 末地底图、HEE 岛屿和地牢塔、混沌岛                | 已移植；沿用原 Worker 的全新末地及圆形示意范围 |
-| 主世界要塞、废弃矿井、村庄                        | 已移植；私有 RWG 村庄已通过原 Java 离线对照及本次实例样本复核 |
-| LootGames、史莱姆空岛、AE2 陨石、下界要塞与尖塔   | 已移植；72 组原 Java 对照通过，除下界要塞外新增模组结构已通过本次实例样本复核 |
-| 月球地牢、村庄                                    | 已移植；保留原预测器特殊的负区块随机数规则     |
-| 火星洞穴、火星及部分 GalaxySpace 地牢             | 已移植；按实际维度配置计算                     |
-| 月球、火星、谷神星、土卫二、海卫八单群系底图      | 已接入；火星颜色待运行时目录校准               |
-| 主世界 RWG/BOP 底图                               | 已接入私有本地校准预览；默认分发包不含该函数包 |
-| 暮色底图及 17 类特征                              | 私有包已接入；76,800 像素、3,845 个特征与实例一致，支持逐类筛选 |
-| 下界、Io、Pluto 等复杂底图                         | 未接入                                         |
-| 矿脉与流体图层、筛选、详情和导出                  | 私有本地包已接入当前 11 个界面维度；41 维度、252 组实例数值对照通过 |
-| Roguelike 地牢、神秘时代节点和祭坛                 | 私有本地包已接入；20 组实例查询、1,079 个位置一致 |
-| 末地硅岩、白钨矿、铂小行星                       | 私有包已接入；10,240 个 Java 筛选样本及六组 Worker 查询通过；按全新末地避让 |
-| 主世界原版刷怪笼候选                              | 私有包已接入；35 个洞穴区块、15 组区域的 99 个候选与实例一致；默认关闭，勾选扫描 |
-| 地图拖动、缩放、网格、过滤、坐标跳转、PNG         | 已实现                                         |
-| 当前视野 CSV、JSON、JourneyMap ZIP、群系 JSON     | 已实现；不直接写入游戏                         |
-| 完整桌面 UI、所有快捷键、完整图层与浏览器视觉回归 | 尚未达到完整一致                               |
-| 存档分析                                          | 首版明确不实现；保留本地文件适配接口           |
-
-默认环境来自用户指定的 GTNH 2.9.0-beta-3 实例配置。月球 ID 为 28、火星为 29，不能套用旧文档中的负 ID。设置里可以导入新的环境 JSON。
-
-模组结构配置位于 `environment.json` 的 `modStructures`：LootGames 菱形大小 20、主世界史莱姆空岛稀有度 8000、AE2 陨石间距 707／地表偏向概率 0.3、Automagy 尖塔概率分母 140。当前实例关闭下界史莱姆空岛。缺省或旧环境 JSON 不自动启用新增模组结构。这里移植的是原 Worker 的预测范围；AE2 当前仅覆盖主世界。
-
-## 生物群系命名空间
-
-Web 数据层使用 `namespace:path`；中文/英文名只用于显示。图像缓冲区使用本次目录中的 `Uint16` 索引，持久化文件携带命名空间 palette，不依赖该临时索引。
-
-1.7.10 的旧 ID 通过「环境 + 维度 + ID」映射，允许不同维度复用同一个数字。实际模组命名空间需要通过环境包明确声明，不能根据显示名称猜测。`amidst:end_void`、`amidst:hee_infested_forest` 等属于本工具的合成预览区域，并非宣称上游注册了这些名字。旧格式环境配置可迁移到 v2 的命名空间色板。
-
-## 验证
-
-`tests/fixtures/reference.json` 的结果来自旧项目原 Java 预测器，覆盖 7 个种子（包括 long 极值和大于 2^53 的值）、正负坐标、拆分查询、末地像素哈希与实际星球维度配置。原始预测算法未改写成 Java 测试副本；测试工具编译参考源码，并仅为配置和结果容器提供环境桩。Space 的纯静态方法由工具从原文件逐字提取。
-
-本地保留参考快照时，可用 JDK 21 重新校验：
+需要 Node.js 22 或以上版本，无第三方 npm 运行依赖。
 
 ```sh
-node tools/verify-reference.mjs
-node tools/verify-mod-reference.mjs
-node tools/build-agent.mjs
-python tests/test_exporter.py
+npm run dev
+npm run check
+npm test
 ```
 
-命名空间碰撞、配置迁移、打包 CRC、导出元数据、存档来源隔离、依赖图与 JVM 采集器另有测试。已在浏览器检查末地与月球、主世界、火星之间切换后的末地底图，并检查截图；当前实例主世界数值对照见下文；完整交互回归仍未完成，不能把数值对照等同于完整视觉验收。
+开发服务器默认地址为 `http://127.0.0.1:4173/`，默认使用 `dist/` 中的基础引擎。请通过 HTTP 打开，不支持直接双击 HTML。
 
-切换维度与种子现在复用计算线程，丢弃旧请求结果；底图按随结果传递的命名空间色板匹配。加载失败不会缓存为空白底图，会有限重试；目录不兼容时提示刷新。旧版页面需要刷新一次才能启用这些防护。
+## 构建发布包
 
-页面提供可选的 WebMCP 地图读取/定位入口，仅在浏览器支持时注册；本次没有可用的 WebMCP 验证上下文，因此未声称通过该扩展的端到端验证。
+```sh
+# 基础静态包与源码包
+npm run build
 
-## 导出工具与后续接入
+# 完整发布源码 ZIP 已附 runtime/，可直接重建同一环境的部署包
+npm run build:release
+npm run verify:release
+```
 
-主世界已接到私有本地静态预览。直接连接已启动的 GTNH 实例，采集实际 RWG 初始化目录及地形对象，完成群系混合、河流与沙丘地表替换。375 个区块共 96,000 像素与实际 Worker 一致；网页稀疏取样另外通过 1,024 像素对照。59 种最终群系颜色由参考 Amidst 的默认配色方法生成。
+在维护者采集工作区第一次生成完整包时：
 
-已有本机采集和编译产物时，运行 `python tools/build-rwg-preview.py --resources --surface`、`node tools/serve.mjs --rwg-preview`，访问 `http://127.0.0.1:4175/` 并选择主世界。资源模式可切换到矿脉或地下流体；灵气节点和祭坛需在图层面板勾选。本地静态包为 `private-packs/amidst-gtnh-rwg-local-preview.zip`，不自动进入默认分发包。完整步骤、已验证范围和剩余限制见 [RWG 接入进度](docs/rwg-selection.md)、[资源预测与更新流程](docs/resource-prediction.md) 和 [Roguelike／神秘时代结构](docs/surface-structures.md)。
+```sh
+node tools/build-release.mjs --runtime-dir private-packs/rwg-local-preview
+```
 
-见 [导出工具说明](docs/runtime-export.md) 和 [接口约定](docs/architecture.md)。当前导出器能从真实实例中提取字节码、保守依赖闭包、方法调用边及缺失项；JVM 采集器能观察加载到 JVM 的字节码。
+完整发布产物位于 `artifacts/`：
 
-**通用字节码中间包仍不能直接在浏览器执行。** 最初的纯噪声编译用于验证链路；当前 RWG 底图另有真实地形字节码、初始化状态与严格单精度适配。其他模组、不同版本和完整 Minecraft/Forge 世界生成仍需独立适配与对照。
+| 文件 | 用途 |
+| --- | --- |
+| `chunkbase-gtnh-source.zip` | 网页源码、测试、工具、文档以及本次发布所需的浏览器函数包 |
+| `chunkbase-gtnh-cloudflare.zip` | 可直接上传 Cloudflare Pages 的完整静态网站，根目录为 `index.html` |
+| `RELEASE-SHA256SUMS.txt` | 两个 ZIP 的 SHA-256 校验值 |
+| `release-report.json` | 构建目录、文件数量及环境标识 |
+
+源码仓库的 `dist/` 是基础引擎；完整发布源码 ZIP 另附 `runtime/`，以便不安装 Minecraft 也能重建该版本。`runtime/` 默认不纳入 Git，它作为版本发布附件提供。仅克隆仓库时，从同版本源码附件取得 `runtime/` 后再构建完整包。改变游戏环境需要重新采集与校准，见 [环境重建](docs/local-delivery.md)。
 
 ## 目录
 
-- `dist/`：可独立托管的前端源文件。
-- `dist/engine/`：计算、命名空间目录、环境与扩展接口。
-- `dist/map.js`：地图相机、分块绘图、缩放与标记。
-- `dist/app.js`、`style.css`、`index.html`：可替换的外围界面。
-- `tools/`：本地运行、校验、打包、参考对照和环境导出。
-- `reference/Amidst-GTNH/`：旧项目已跟踪文件快照，被 Git 忽略。
-- `private-packs/`：实际环境检查及字节码中间包，被 Git 忽略。
-- `artifacts/`：打包结果与采集器，被 Git 忽略。
+| 目录 | 内容 |
+| --- | --- |
+| `dist/` | 手工维护的网页源码、引擎和界面素材，不是可删除的构建缓存 |
+| `tests/` | 可独立运行的 Node.js 回归测试与固定参考数据 |
+| `tools/` | 构建、验证、采集和素材导入工具；采集工具的外部依赖见对应文档 |
+| `deploy/cloudflare/` | Cloudflare 响应头和 404 页面 |
+| `docs/` | 架构、功能、验证与历史开发记录 |
+| `runtime/` | 完整源码发布附件中附带的已编译浏览器函数及必要环境数据 |
 
-本项目有独立 `.git`，当前放在原工作树下的 `Amidst-GTNH-Web/` 目录。未改变原仓库跟踪的文件、原分支或主仓库。参考快照不包含旧 Git 元数据、构建缓存和未跟踪产物。
+游戏 JAR、存档、原始采集会话、连接凭据、编译缓存和本机诊断文件不进入发布包。
 
-代码许可和素材来源见 [NOTICE](dist/NOTICE.md)。
+## 制作与许可
 
-本轮离线开发与后续校准步骤见 [离线开发记录](docs/offline-development.md)。
+网页作者：**InvalidCode**。基于 [Amidst-GTNH](https://github.com/Invalidcod3/Amidst-GTNH) 与 Amidst 的工作；Amidst 原作者为 Skidoodle（skiphs），并包含其他贡献者的工作。感谢 GTNH、各模组作者及维护团队，矿物译名参考 Kiwi 的 [Translation-of-GTNH](https://github.com/Kiwi233/Translation-of-GTNH)。
+
+网页代码遵循 [GPL-3.0](LICENSE)。第三方代码、素材与译文保留各自来源及许可，详见 [来源说明](dist/NOTICE.md)。

@@ -2,9 +2,10 @@ import {JavaRandom,long,parseSeed} from './random.js';
 import {validateBounds} from './native.js';
 
 // Original Worker candidate test over a calibrated cave mask; never a guarantee of a generated spawner.
-export function createDungeonPredictor(engine,input,height,{yieldTask=()=>new Promise(r=>setTimeout(r,0)),now=()=>performance.now(),cacheLimit=512}={}) {
-  const profile=structuredClone(input),cache=new Map();let currentSeed;
+export function createDungeonPredictor(engine,input,height,{yieldTask=()=>new Promise(r=>setTimeout(r,0)),now=()=>performance.now(),cacheLimit=512,resultCacheLimit=65536}={}) {
+  const profile=structuredClone(input),cache=new Map(),completed=new Map();let currentSeed;
   if(typeof profile.undergroundLakes!=='boolean'||typeof profile.undergroundLavaLakes!=='boolean'||!Number.isInteger(cacheLimit)||cacheLimit<1||cacheLimit>2048)throw new Error('刷怪笼配置无效');
+  if(!Number.isInteger(resultCacheLimit)||resultCacheLimit<0||resultCacheLimit>262144)throw new Error('刷怪笼结果缓存配置无效');
   function cell(x,y,z) {
     if(y<0||y>=256)return 2;
     const cx=Math.floor(x/16),cz=Math.floor(z/16),key=`${cx}:${cz}`;
@@ -31,7 +32,7 @@ export function createDungeonPredictor(engine,input,height,{yieldTask=()=>new Pr
     const check=()=>{if(signal?.aborted)throw new Error('CANCELLED');};check();
     if(q.excludedKinds?.includes('VANILLA_SPAWNER_DUNGEON'))return [];
     const seed=parseSeed(q.seed);
-    if(seed!==currentSeed){currentSeed=undefined;cache.clear();engine.configure(seed);currentSeed=seed;}
+    if(seed!==currentSeed){currentSeed=undefined;cache.clear();completed.clear();engine.configure(seed);currentSeed=seed;}
     const b=q.bounds,base=new JavaRandom(seed),a=base.nextLong()/2n*2n+1n,c=base.nextLong()/2n*2n+1n;
     const nearby=structures.filter(m=>['STRONGHOLD','VILLAGE','MINESHAFT'].includes(m.kind)).map(m=>[Math.floor(m.x/16),Math.floor(m.z/16)]);
     const result=[];let deadline=now()+16;
@@ -39,16 +40,26 @@ export function createDungeonPredictor(engine,input,height,{yieldTask=()=>new Pr
     if((maxX-minX+1)*(maxZ-minZ+1)>262144)throw new Error('刷怪笼扫描范围过大，请放大地图');
     for(let cz=minZ;cz<=maxZ;cz++)for(let cx=minX;cx<=maxX;cx++) {
       if(!nearby.some(([x,z])=>Math.abs(cx-x)<=8&&Math.abs(cz-z)<=8)) {
-        const random=new JavaRandom(long(BigInt(cx)*a+BigInt(cz)*c)^BigInt(seed));
-        if(!(profile.undergroundLakes&&random.nextInt(10)===0)&&!(profile.undergroundLavaLakes&&random.nextInt(18)===0)) {
-          for(let attempt=0;attempt<8;attempt++) {
-            const x=cx*16+random.nextInt(16)+8,y=random.nextInt(128),z=cz*16+random.nextInt(16)+8,rx=random.nextInt(2)+2,rz=random.nextInt(2)+2;
-            if(possible(x,y,z,rx,rz)) {
-              if(x>=b.minX&&x<b.maxX&&z>=b.minZ&&z<b.maxZ)result.push({kind:'VANILLA_SPAWNER_DUNGEON',subtype:String(y),x,z,certainty:'POSSIBLE',source:'Minecraft / RWG'});
-              break; // Loot changes the stream after the first successful attempt, even outside this query.
+        const key=`${cx}:${cz}`;let candidate=null;
+        if(completed.has(key)) {
+          candidate=completed.get(key);completed.delete(key);completed.set(key,candidate);
+        } else {
+          const random=new JavaRandom(long(BigInt(cx)*a+BigInt(cz)*c)^BigInt(seed));
+          if(!(profile.undergroundLakes&&random.nextInt(10)===0)&&!(profile.undergroundLavaLakes&&random.nextInt(18)===0)) {
+            for(let attempt=0;attempt<8;attempt++) {
+              const x=cx*16+random.nextInt(16)+8,y=random.nextInt(128),z=cz*16+random.nextInt(16)+8,rx=random.nextInt(2)+2,rz=random.nextInt(2)+2;
+              if(possible(x,y,z,rx,rz)) {
+                candidate={kind:'VANILLA_SPAWNER_DUNGEON',subtype:String(y),x,z,certainty:'POSSIBLE',source:'Minecraft / RWG'};
+                break; // Loot changes the stream after the first success, even outside this query.
+              }
             }
           }
+          // Cache only fully checked source chunks, independently of viewport clipping.
+          // Structure exclusions are checked above on EVERY query, never cached as empty.
+          check();
+          if(resultCacheLimit){completed.set(key,candidate);if(completed.size>resultCacheLimit)completed.delete(completed.keys().next().value);}
         }
+        if(candidate&&candidate.x>=b.minX&&candidate.x<b.maxX&&candidate.z>=b.minZ&&candidate.z<b.maxZ)result.push({...candidate});
       }
       if(now()>=deadline){await yieldTask();check();deadline=now()+16;}
     }

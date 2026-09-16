@@ -14,6 +14,7 @@ export function validateConfig(value) {
   if (!value || ![1, 2].includes(value.schemaVersion))
     throw new Error("不支持的环境配置版本");
   const output = structuredClone(defaults);
+  for(const d of dimensions)if(!Object.hasOwn(output.dimensionIds,d.key))output.dimensionIds[d.key]=d.id;
   if ("modStructures" in value) output.modStructures = validateModConfig(value.modStructures);
   for (const key of [
     "chaosEnabled",

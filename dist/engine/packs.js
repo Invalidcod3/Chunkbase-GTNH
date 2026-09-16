@@ -1,6 +1,7 @@
 // Packs are installed by the site maintainer, never executed from user uploads.
 // A JVM extraction archive cannot pass this browser-pack contract.
 import { biomeRegistry } from "./catalog.js";
+import { BiomeRegistry } from "./biome-registry.js";
 export function validateRegistry(registry, base) {
   if (registry?.schemaVersion !== 1 || !Array.isArray(registry.packs))
     throw new Error("Invalid function pack registry");
@@ -35,12 +36,17 @@ export function validateRegistry(registry, base) {
       !Array.isArray(pack.dimensions) ||
       !pack.dimensions.every(
         (d) =>
-          typeof d.key === "string" &&
+          typeof d.key === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(d.key) &&
+          (d.id===undefined||(Number.isInteger(d.id)&&Math.abs(d.id)<=2147483647)) &&
+          ['zh','en','noteEn'].every(k=>d[k]===undefined||(typeof d[k]==='string'&&d[k].length>0&&d[k].length<=512)) &&
+          (d.uniformBiome===undefined||(typeof d.uniformBiome==='string'&&/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(d.uniformBiome))) &&
+          (d.biomePreview===undefined||['direct','progressive'].includes(d.biomePreview)) &&
           Array.isArray(d.capabilities) &&
           (d.resourceModes === undefined || (Array.isArray(d.resourceModes) && d.resourceModes.every(m => ['ORES','FLUID'].includes(m)))) &&
+          (d.resourceOptions === undefined || (d.resourceOptions && typeof d.resourceOptions==='object' && Object.entries(d.resourceOptions).every(([mode,options])=>['ORES','FLUID'].includes(mode)&&Array.isArray(options)&&options.length<=4096&&options.every(o=>o&&typeof o.id==='string'&&o.id.length>0&&o.id.length<=256&&typeof o.name==='string'&&o.name.length<=256)))) &&
           (d.structureKinds === undefined || (Array.isArray(d.structureKinds) && d.structureKinds.length<=256 && d.structureKinds.every(k=>typeof k==='string' && /^[A-Z0-9_]+$/.test(k)))) &&
           d.capabilities.every((c) =>
-            ["biomes", "structures", "resources"].includes(c),
+            ["biomes", "structures", "resources", "spawn"].includes(c),
           ),
       )
     )
@@ -54,28 +60,47 @@ export async function readRegistry() {
   if (!response.ok) throw new Error("Cannot load function pack registry");
   return validateRegistry(await response.json(), url);
 }
-export async function loadProviders() {
-  const descriptors = await readRegistry();
-  for (const descriptor of descriptors)
-    for (const biome of descriptor.biomes || []) biomeRegistry.register(biome);
-  return Promise.all(
-    descriptors.map(async (descriptor) => {
-      const module = await import(descriptor.url);
-      if (module.provider?.apiVersion !== 1)
-        throw new Error("Invalid provider API: " + descriptor.id);
-      return { descriptor, provider: module.provider };
-    }),
-  );
+export function registerPackBiomes(descriptor,registry=biomeRegistry) {
+  // Validate a whole pack before committing any of its palette entries.
+  const check=new BiomeRegistry();for(const b of registry.indices)check.register(b);
+  for(const b of descriptor.biomes || [])check.register(b);
+  return (descriptor.biomes || []).map(b=>registry.register(b));
+}
+export async function loadProviders({descriptors,registry=biomeRegistry,importer=url=>import(url)}={}) {
+  try{descriptors??=await readRegistry();}catch(error){return Object.assign([],{registryError:error});}
+  const installed=descriptors.map(descriptor=>({descriptor}));
+  // Palette order stays deterministic even when module loading fails.
+  for(const p of installed)try{registerPackBiomes(p.descriptor,registry);}catch(error){p.error=error;p.invalidPalette=true;}
+  for(const p of installed)p.load=async()=>{
+    if(p.invalidPalette)return;
+    try{
+      const url=new URL(p.descriptor.url);if(p.attempts)url.searchParams.set('retry',String(p.attempts));p.attempts=(p.attempts||0)+1;
+      const module=await importer(url.href);
+      if(module.provider?.apiVersion!==1)throw new Error('Invalid provider API: '+p.descriptor.id);
+      for(const action of new Set(p.descriptor.dimensions.flatMap(d=>d.capabilities.map(c=>({biomes:'sampleBiomes',structures:'predictStructures',resources:'predictResources',spawn:'predictSpawn'})[c]))))
+        if(typeof module.provider[action]!=='function')throw new Error('Function pack method missing: '+action);
+      p.provider=module.provider;p.error=null;
+    }catch(error){p.error=error;}
+  };
+  await Promise.all(installed.filter(p=>!p.error).map(p=>p.load()));return installed;
+}
+export async function retryProviders(installed) {
+  await Promise.all(installed.filter(p=>p.error&&!p.invalidPalette).map(p=>p.load()));
+  return installed.filter(p=>p.error).map(p=>({id:p.descriptor.id,error:p.error.message}));
 }
 export function findProvider(installed, dimension, action) {
   const capability = {
     sampleBiomes: "biomes",
     predictStructures: "structures",
     predictResources: "resources",
+    predictSpawn: "spawn",
   }[action];
-  return installed.find(({ descriptor }) =>
+  if(installed.registryError && !(action==='sampleBiomes'&&['end','moon','mars','ceres','enceladus','proteus'].includes(dimension)))throw new Error('函数包目录加载失败：'+installed.registryError.message);
+  const match=installed.find(({ descriptor }) =>
     descriptor.dimensions.some(
       (d) => d.key === dimension && d.capabilities.includes(capability),
     ),
-  )?.provider;
+  );
+  if(match?.error)throw new Error('函数包 '+match.descriptor.id+' 加载失败：'+match.error.message);
+  return match?.provider;
 }

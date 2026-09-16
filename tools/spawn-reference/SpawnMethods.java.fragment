@@ -1,0 +1,73 @@
+    private static net.minecraft.world.World world;
+    private static net.minecraft.world.gen.MapGenCaves caves;
+    private static long worldSeed;
+    private static final net.minecraft.block.Block[] blocks=new net.minecraft.block.Block[65536];
+    private static final byte[] metadata=new byte[65536];
+    private static final net.minecraft.block.Block[][] columns=new net.minecraft.block.Block[257][];
+    private static final Random surfaceRandom=new Random(),mapRandom=new Random();
+    private static final int[] allowed={ALLOWED_BIOMES};
+    private static boolean spawnBiome(int id){for(int v:allowed)if(v==id)return true;return false;}
+    @JSExport public static int[] surfaces(int cx,int cz){
+        ready();if(Math.abs((long)cx)>1874999||Math.abs((long)cz)>1874999)throw new IllegalArgumentException("World bounds");
+        // Scratch blocks are isolated from map and dungeon engines. Only completed summaries escape.
+        RealisticBiomeBase[] realistic=new RealisticBiomeBase[256];
+        generator.getNewNoise(manager,cx*16,cz*16,realistic);
+        net.minecraft.world.biome.BiomeGenBase[] biomes=new net.minecraft.world.biome.BiomeGenBase[256];
+        for(int i=0;i<256;i++)biomes[i]=realistic[i].baseBiome;
+        Arrays.fill(metadata,(byte)0);
+        for(int c=0;c<256;c++){
+            int count=Math.max(0,Math.min(255,(int)generator.testHeight[c])+1);
+            if(columns[count]==null){
+                net.minecraft.block.Block[] column=new net.minecraft.block.Block[256];
+                Arrays.fill(column,0,count,Registry.BLOCKS[STONE_ID]);
+                if(count<63)Arrays.fill(column,count,63,Registry.BLOCKS[WATER_ID]);
+                Arrays.fill(column,Math.max(count,63),256,Registry.BLOCKS[AIR_ID]);columns[count]=column;
+            }
+            System.arraycopy(columns[count],0,blocks,c*256,256);
+        }
+        surfaceRandom.setSeed((long)cx*341873128712L+(long)cz*132897987541L);
+        for(int i=0;i<256;i++)if(generator.mapGenBiomes[i]>0)
+            RealisticBiomeBase.getBiome(i).generateMapGen(blocks,metadata,worldSeed,world,manager,mapRandom,cx,cz,manager.perlin,manager.cell,generator.testHeight);
+        for(int z=0;z<16;z++)for(int x=0;x<16;x++){
+            int i=z*16+x,bx=cx*16+x,bz=cz*16+z;float river=-generator.riverStrength[x*16+z];
+            if(river>0.05F&&river+manager.perlin.noise2(bx/10.0F,bz/10.0F)*0.15F>0.8F)biomes[i]=realistic[i].riverBiome;
+            realistic[i].rReplace(blocks,metadata,bx,bz,z,x,-1,world,surfaceRandom,manager.perlin,manager.cell,generator.testHeight,river,biomes);
+            int bottom=(x*16+z)*256;blocks[bottom]=Registry.BLOCKS[BEDROCK_ID];
+            for(int bound=2;bound<=5;bound++)blocks[bottom+surfaceRandom.nextInt(bound)]=Registry.BLOCKS[BEDROCK_ID];
+        }
+        if(CAVES_ENABLED)caves.func_151539_a(null,world,cx,cz,blocks);
+        int[] result=new int[1024];
+        for(int z=0;z<16;z++)for(int x=0;x<16;x++){
+            int offset=(x*16+z)*256,y=63,i=(z*16+x)*4;
+            while(y<255&&blocks[offset+y+1]!=null&&blocks[offset+y+1]!=Registry.BLOCKS[AIR_ID])y++;
+            result[i]=blocks[offset+y]==null?AIR_ID:blocks[offset+y].id;
+            result[i+1]=biomes[z*16+x].id;result[i+2]=y;result[i+3]=spawnBiome(result[i+1])?1:0;
+        }
+        // RWG's internal coordinate cache is also bounded independently.
+        if(manager.biomeDataMap.size()>4096)manager.biomeDataMap.clear();
+        return result;
+    }
+    static int[] search(String seed,boolean bop){
+        configureSeed(seed);Random r=new Random(Long.parseLong(seed));int x=0,z=0,moves=0;
+        Map<Long,int[]> cache=new LinkedHashMap<>();boolean viable=false;
+        while(moves<1000){
+            int cx=x>>4,cz=z>>4;long key=((long)cx<<32)^(cz&0xffffffffL);
+            int[] s=cache.get(key);if(s==null){s=surfaces(cx,cz);cache.put(key,s);if(cache.size()>64)cache.remove(cache.keySet().iterator().next());}
+            int i=((z&15)*16+(x&15))*4,b=s[i];
+            viable=bop?(b==SAND_ID||b==STONE_ID||(b==SNOW_ID&&s[i+3]==1)):b==GRASS_ID;
+            if(viable)break;x+=r.nextInt(64)-r.nextInt(64);z+=r.nextInt(64)-r.nextInt(64);moves++;
+        }
+        return new int[]{x,z,moves,viable?1:0};
+    }
+    public static void main(String[] args){
+        boolean first=true;System.out.print("{\"chunks\":[");
+        String[] seeds={"0","-1","9007199254740993","9223372036854775807","-9223372036854775808","-8138049151491905853"};
+        for(String seed:seeds){configureSeed(seed);for(int[] c:new int[][]{{0,0},{-1,-1},{2,-3},{-113,97},{1001,-2049},{1038,-1250}}){
+            if(!first)System.out.print(",");first=false;
+            System.out.print("{\"seed\":\""+seed+"\",\"chunk\":"+Arrays.toString(c)+",\"surfaces\":"+Arrays.toString(surfaces(c[0],c[1]))+"}");
+        }}
+        System.out.print("],\"searches\":[");first=true;
+        for(String seed:seeds)for(boolean bop:new boolean[]{false,true}){if(!first)System.out.print(",");first=false;
+            System.out.print("{\"seed\":\""+seed+"\",\"bop\":"+bop+",\"result\":"+Arrays.toString(search(seed,bop))+"}");
+        }System.out.println("]}");
+    }

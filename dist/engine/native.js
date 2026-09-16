@@ -56,7 +56,7 @@ function chunks(b, offset, visit) {
     )
       visit(x, z);
 }
-export function predictStructures(q) {
+export function predictStructures(q, {modCandidates} = {}) {
   parseSeed(q.seed);
   validateBounds(
     q.bounds,
@@ -68,7 +68,7 @@ export function predictStructures(q) {
   );
   const { seed, dimension, bounds: b, config = {} } = q;
   if (dimension === "end") return endStructures(seed, b, config);
-  const result = predictModStructures(q);
+  const result = predictModStructures(q,modCandidates);
   if (dimension === "nether") result.push(...netherFortresses(seed,b));
   const inside = (x, z) =>
     x >= b.minX && x < b.maxX && z >= b.minZ && z < b.maxZ;

@@ -1,11 +1,12 @@
 import { regionRandom } from "./random.js";
-import { predictStructures, validateBounds } from "./native.js";
+import { validateBounds } from "./native.js";
+import { gpuCompute } from './gpu-compute.js';
 
 export async function rwgStructures(q, viable, { signal, yieldTask = () => new Promise(r => setTimeout(r, 0)) } = {}) {
   if (q.dimension !== "overworld") throw new Error("RWG 结构只支持主世界");
   validateBounds(q.bounds);
   if (signal?.aborted) throw new Error("CANCELLED");
-  const result = predictStructures(q);
+  const result = await gpuCompute.structures(q,{signal});
   if (q.config?.villagesEnabled === false) return result;
   const b = q.bounds;
   let deadline = performance.now() + 16;

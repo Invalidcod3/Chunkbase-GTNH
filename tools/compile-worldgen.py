@@ -118,6 +118,7 @@ def compile_worldgen(archive, adapter_profile=None, runtime_profile=None):
     output = ROOT/('private-packs/rwg-terrain-browser' if profile else 'private-packs/rwg-selection-browser')
     output.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(work/'target/browser/selection.js', output/'selection.js')
+    run(['node', ROOT/'tools/optimize-generated.mjs', output/'selection.js'] + (['--cell-noise'] if profile else []))
     (output/'reference.json').write_text(json.dumps(fixtures),'utf-8')
     if villages is not None:(output/'village-reference.json').write_text(json.dumps(villages),'utf-8')
     report = {'schemaVersion':1, 'kind':'browser-function-library', 'browserExecutable':True,

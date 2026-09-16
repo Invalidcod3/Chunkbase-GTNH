@@ -5,7 +5,7 @@ const {biomeRegistry}=await import(new URL("engine/catalog.js",base));
 const registry=JSON.parse(await readFile(new URL("packs/registry.json",base),"utf8"));
 for(const b of registry.packs[0].biomes)biomeRegistry.register(b);
 const originalFetch=globalThis.fetch;
-globalThis.fetch=async url=>{assert.equal(url.href,new URL('packs/rwg/surface-profile.json',base).href);return {ok:true,json:async()=>JSON.parse(await readFile(url,'utf8'))};};
+globalThis.fetch=async url=>{assert.ok(['surface-profile.json','spawn-profile.json'].some(name=>url.href===new URL('packs/rwg/'+name,base).href));return {ok:true,json:async()=>JSON.parse(await readFile(url,'utf8'))};};
 let provider;
 try{({provider}=await import(new URL("packs/rwg/provider.js",base)));}finally{globalThis.fetch=originalFetch;}
 const actual=await provider.sampleBiomes({seed:"9007199254740993",dimension:"overworld",x:-35,z:-17,width:32,height:32,step:4});

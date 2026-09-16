@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 const root = fileURLToPath(new URL("../", import.meta.url)),
-  dist = path.join(root, "dist");
+  dist = process.argv[2] ? path.resolve(process.argv[2]) : path.join(root, "dist");
 async function walk(dir) {
   const files = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
@@ -25,7 +25,7 @@ async function checkLink(from, reference) {
   }
 }
 for (const file of files) {
-  if (file.endsWith(".js")) {
+  if (/\.m?js$/.test(file)) {
     const result = spawnSync(process.execPath, ["--check", file], {
       encoding: "utf8",
     });

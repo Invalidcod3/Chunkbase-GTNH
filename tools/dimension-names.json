@@ -1,0 +1,212 @@
+{
+  "Nether": [
+    "nether",
+    "下界",
+    "Nether"
+  ],
+  "Overworld": [
+    "overworld",
+    "主世界",
+    "Overworld"
+  ],
+  "The End": [
+    "end",
+    "末地",
+    "The End"
+  ],
+  "Twilight Forest": [
+    "twilight",
+    "暮色森林",
+    "Twilight Forest"
+  ],
+  "moon": [
+    "moon",
+    "月球",
+    "Moon"
+  ],
+  "mars": [
+    "mars",
+    "火星",
+    "Mars"
+  ],
+  "ceres": [
+    "ceres",
+    "谷神星",
+    "Ceres"
+  ],
+  "iojupiter": [
+    "io",
+    "木卫一",
+    "Io"
+  ],
+  "enceladus": [
+    "enceladus",
+    "土卫二",
+    "Enceladus"
+  ],
+  "proteus": [
+    "proteus",
+    "海卫八",
+    "Proteus"
+  ],
+  "pluto": [
+    "pluto",
+    "冥王星",
+    "Pluto"
+  ],
+  "ross128b": [
+    "ross128b",
+    "罗斯128b",
+    "Ross 128b"
+  ],
+  "ross128ba": [
+    "ross128ba",
+    "罗斯128ba",
+    "Ross 128ba"
+  ],
+  "barnarda4": [
+    "barnarda_e",
+    "巴纳德E",
+    "Barnarda E"
+  ],
+  "barnarda5": [
+    "barnarda_f",
+    "巴纳德F",
+    "Barnarda F"
+  ],
+  "barnarda2": [
+    "barnarda_c",
+    "巴纳德C",
+    "Barnarda C"
+  ],
+  "haumea": [
+    "haumea",
+    "妊神星",
+    "Haumea"
+  ],
+  "vega1": [
+    "vega_b",
+    "织女一B",
+    "Vega B"
+  ],
+  "tcetie": [
+    "tau_ceti_e",
+    "鲸鱼座T星E",
+    "Tau Ceti E"
+  ],
+  "miranda": [
+    "miranda",
+    "天卫五",
+    "Miranda"
+  ],
+  "makemake": [
+    "makemake",
+    "鸟神星",
+    "Makemake"
+  ],
+  "neper": [
+    "neper",
+    "奈佩里",
+    "Neper"
+  ],
+  "maahes": [
+    "maahes",
+    "马赫斯",
+    "Maahes"
+  ],
+  "anubis": [
+    "anubis",
+    "阿努比斯",
+    "Anubis"
+  ],
+  "horus": [
+    "horus",
+    "荷鲁斯",
+    "Horus"
+  ],
+  "asteroids": [
+    "asteroids",
+    "小行星带",
+    "Asteroids"
+  ],
+  "seth": [
+    "seth",
+    "赛特",
+    "Seth"
+  ],
+  "centauribb": [
+    "centauri_bb",
+    "半人马座α星Bb",
+    "Alpha Centauri Bb"
+  ],
+  "asteroidbeltmehen": [
+    "mehen",
+    "迈罕带",
+    "Mehen Belt"
+  ],
+  "kuiperbelt": [
+    "kuiper_belt",
+    "柯伊伯带",
+    "Kuiper Belt"
+  ],
+  "europa": [
+    "europa",
+    "木卫二",
+    "Europa"
+  ],
+  "dimensionDarkWorld": [
+    "everglades",
+    "废土世界",
+    "Everglades"
+  ],
+  "mercury": [
+    "mercury",
+    "水星",
+    "Mercury"
+  ],
+  "phobos": [
+    "phobos",
+    "火卫一",
+    "Phobos"
+  ],
+  "venus": [
+    "venus",
+    "金星",
+    "Venus"
+  ],
+  "deimos": [
+    "deimos",
+    "火卫二",
+    "Deimos"
+  ],
+  "ganymed": [
+    "ganymede",
+    "木卫三",
+    "Ganymede"
+  ],
+  "titan": [
+    "titan",
+    "土卫六",
+    "Titan"
+  ],
+  "callisto": [
+    "callisto",
+    "木卫四",
+    "Callisto"
+  ],
+  "oberon": [
+    "oberon",
+    "天卫四",
+    "Oberon"
+  ],
+  "triton": [
+    "triton",
+    "海卫一",
+    "Triton"
+  ],
+  "Underdark": [
+    "deep_dark",
+    "漆黑世界",
+    "Deep Dark"
+  ]
+}

@@ -3,161 +3,176 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Amidst GTNH · 种子地图</title>
+    <title>Chunkbase NH · 种子地图</title>
     <meta
       name="description"
       content="在浏览器中预览 GTNH 种子、查找结构并导出坐标。"
     />
-    <link rel="icon" href="./assets/amidst-32x32.png" />
+    <link rel="icon" type="image/svg+xml" href="./assets/ui/nh-logo.svg" />
     <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./theme.css" />
   </head>
   <body>
     <header class="toolbar">
-      <a class="brand" href="./"
-        ><img src="./assets/amidst-32x32.png" width="28" height="28" alt="" /><b
-          >Amidst <span>GTNH</span></b
-        ><small>WEB</small></a
-      >
+      <a class="brand" href="./" aria-label="Chunkbase NH">
+        <img class="brand-logo" src="./assets/ui/nh-logo.svg" alt="" />
+        <b>CHUNKBASE</b><small>NH Ver</small>
+      </a>
       <form id="seed-form" class="seed-control">
-        <label for="seed" data-i18n="seed">种子</label
-        ><input
-          id="seed"
-          name="seed"
-          value="-4172144997902289642"
-          inputmode="text"
-          spellcheck="false"
-          autocomplete="off"
-          required
-          aria-label="64 位世界种子"
-        /><button type="submit" data-i18n="load">载入</button
-        ><button
-          type="button"
-          id="random"
-          title="随机种子"
-          aria-label="随机种子"
-        >
-          ⚄
-        </button>
+        <label class="sr-only" for="seed" data-i18n="seed">种子</label>
+        <input id="seed" name="seed" value="-4172144997902289642" placeholder="输入种子…" spellcheck="false" autocomplete="off" required aria-label="64 位世界种子" />
+        <button class="sr-only" type="submit" data-i18n="load">载入</button>
+        <button class="icon-button" type="button" id="random" title="随机种子" aria-label="随机种子"><span class="ui-icon dice" aria-hidden="true"></span></button>
       </form>
-      <label class="dimension-control"
-        ><span data-i18n="dimension">维度</span
-        ><select id="dimension"></select
-      ></label>
+      <div class="toolbar-control"><span id="dimension-label" data-i18n="dimension">维度</span><div class="select-menu" id="dimension-menu"><select id="dimension" aria-labelledby="dimension-label"></select></div></div>
+      <div class="toolbar-control"><span id="layer-label" data-i18n="layers">图层</span><div class="select-menu" id="layer-menu"><select id="marker-mode" aria-labelledby="layer-label"><option value="STRUCTURE" data-i18n="poi">兴趣点</option><option value="ORES" data-i18n="ores">矿脉</option><option value="FLUID" data-i18n="fluids">流体矿脉</option></select></div></div>
+      <label class="grid-control"><span data-i18n="grid">网格</span><input id="show-grid" type="checkbox" /><span class="grid-check" aria-hidden="true"></span></label>
       <div class="toolbar-actions">
-        <button id="export-open" data-i18n="export">导出</button
-        ><button id="settings-open" data-i18n="settings">设置</button
-        ><button id="about-open" data-i18n="about">来源</button
-        ><button id="language" aria-label="切换语言">EN</button>
+        <button class="icon-button" id="settings-open" title="设置" aria-label="设置"><span class="ui-icon settings" aria-hidden="true"></span></button>
+        <button class="icon-button" id="about-open" title="信息" aria-label="信息"><span class="ui-icon info" aria-hidden="true"></span></button>
+        <button class="icon-button" id="language" title="切换语言" aria-label="切换语言"><span class="ui-icon language" aria-hidden="true"></span></button>
       </div>
     </header>
-    <main id="map" aria-label="地图预览">
-      <canvas
-        id="map-canvas"
-        tabindex="0"
-        aria-label="地图，可用方向键移动，加减键缩放"
-      ></canvas>
-      <div class="map-top">
-        <section class="map-panel map-heading">
-          <strong id="map-title">末地</strong
-          ><span id="mode-note">按全新末地预测</span>
-        </section>
-        <div id="progress" role="status" class="map-panel" hidden>计算中…</div>
-      </div>
-      <aside class="map-panel layers">
-        <details open>
-          <summary data-i18n="layers">图层</summary>
-          <label
-            ><input type="checkbox" id="show-biomes" checked /><span
-              data-i18n="biomes"
-              >生物群系</span
-            ></label
-          ><label
-            ><input type="checkbox" id="show-structures" checked /><span
-              data-i18n="structures"
-              >结构</span
-            ></label
-          >
-          <div id="kind-filters"></div>
-          <label
-            ><input type="checkbox" id="show-grid" /><span data-i18n="grid"
-              >区块网格</span
-            ></label
-          >
-          <hr />
-          <label class="mode-control"><span data-i18n="markerMode">显示模式</span><select id="marker-mode" aria-label="显示模式"><option value="STRUCTURE" data-i18n="structures">结构</option><option value="ORES" data-i18n="ores">矿脉</option><option value="FLUID" data-i18n="fluids">地下流体</option></select></label>
-          <div id="resource-controls" hidden>
-            <label><span data-i18n="resourceSearch">名称／材料</span><input id="resource-search" type="search" aria-label="筛选资源名称或材料" /></label>
-            <label id="fluid-threshold"><span data-i18n="minimumFluid">最低初始产量 (L/Op)</span><input id="minimum-fluid" type="number" value="0" min="0" max="429496" step="1" /></label>
+    <div class="workspace">
+      <main id="map" aria-label="地图预览">
+        <canvas id="map-canvas" tabindex="0" aria-label="地图，可用方向键移动，加减键缩放"></canvas>
+        <div class="map-top">
+          <section class="map-panel map-heading" hidden><strong id="map-title">末地</strong><span id="mode-note">按全新末地预测</span></section>
+          <div class="map-status">
+            <div id="progress" role="status" class="map-panel" hidden>计算中…</div>
+            <div id="map-quality" role="status" class="map-panel" hidden></div>
+            <div id="marker-error" class="map-panel" role="status" hidden></div>
+            <button id="retry-map" class="map-panel" hidden data-i18n="retryMap">重试失败图层</button>
           </div>
-          <p class="muted" id="resource-status">矿脉与流体预测待接入</p>
-        </details>
+        </div>
+        <section id="detail" class="map-panel detail" hidden>
+          <button id="detail-close" class="close" aria-label="关闭详情">×</button>
+          <div class="detail-heading"><img id="detail-icon" alt="" hidden /><strong id="detail-title"></strong></div>
+          <button id="copy-coordinates" title="复制坐标" aria-label="复制坐标">⧉</button>
+          <details id="detail-extra"><summary title="更多信息" aria-label="更多信息">⋯</summary><div id="detail-content"></div></details>
+        </section>
+        <div class="zoom-controls map-panel">
+          <button id="zoom-in" aria-label="放大" title="放大">+</button>
+          <button id="zoom-out" aria-label="缩小" title="缩小">−</button>
+          <button id="home" title="回到原点" aria-label="回到原点">O</button>
+        </div>
+        <div class="map-bottom">
+          <div class="map-panel coordinates">
+            <form id="goto-form">
+              <div class="coordinate-row"><label for="goto-x">X</label><button type="button" id="coordinate-x" class="coordinate-value" title="双击编辑 X 坐标">0</button><input id="goto-x" aria-label="X 坐标" type="number" min="-29999000" max="29999000" value="0" required hidden /></div>
+              <div class="coordinate-row"><label for="goto-z">Z</label><button type="button" id="coordinate-z" class="coordinate-value" title="双击编辑 Z 坐标">0</button><input id="goto-z" aria-label="Z 坐标" type="number" min="-29999000" max="29999000" value="0" required hidden /></div>
+              <button type="submit" class="sr-only" data-i18n="go">定位</button>
+            </form>
+            <output id="coordinates" class="sr-only"></output><span id="biome-name"></span>
+          </div>
+          <div id="scale" class="scale"><span id="scale-label">500 blocks</span></div>
+        </div>
+      </main>
+      <aside id="filter-panel" class="filter-panel" aria-label="筛选面板">
+        <div class="sidebar-heading"><button id="sidebar-toggle" class="icon-button" aria-expanded="true" aria-controls="sidebar-content" title="收起筛选面板"><span class="ui-icon collapse" aria-hidden="true"></span></button><strong data-i18n="filterPanel">筛选面板</strong></div>
+        <div id="sidebar-content" class="sidebar-content">
+          <div class="filter-scroll">
+            <section id="structure-section" class="filter-section">
+              <button class="section-toggle" aria-expanded="true" aria-controls="structure-body"><span class="ui-icon pin" aria-hidden="true"></span><span data-i18n="poi">兴趣点</span><span class="chevron" aria-hidden="true"></span></button>
+              <div id="structure-body" class="section-body"><div class="section-clip">
+                <label class="filter-row master-filter"><input type="checkbox" id="show-structures" checked /><span class="filter-symbol"><span class="ui-icon check" aria-hidden="true"></span></span><span data-i18n="showPoints">显示兴趣点</span></label>
+                <div id="kind-filters"></div>
+              </div></div>
+            </section>
+            <section id="resource-section" class="filter-section" hidden>
+              <button class="section-toggle" aria-expanded="true" aria-controls="resource-body"><span id="resource-section-icon" class="ui-icon box" aria-hidden="true"></span><span id="resource-section-title">矿脉</span><span class="chevron" aria-hidden="true"></span></button>
+              <div id="resource-body" class="section-body"><div class="section-clip">
+                <div id="resource-controls" hidden>
+                  <label><span data-i18n="resourceSearch">名称／材料</span><input id="resource-search" type="search" aria-label="筛选资源名称或材料" /></label>
+                  <label id="fluid-threshold"><span data-i18n="minimumFluid">最低初始产量 (L/Op)</span><input id="minimum-fluid" type="number" value="0" min="0" max="429496" step="1" /></label>
+                  <label id="ore-height"><span data-i18n="oreHeight">矿脉高度相交范围</span><span class="height-range"><input id="ore-min-y" aria-label="最低 Y" type="number" min="0" max="255" value="0" /><span>–</span><input id="ore-max-y" aria-label="最高 Y" type="number" min="0" max="255" value="255" /></span></label>
+                  <select id="resource-type" aria-label="资源类型" hidden></select>
+                  <div class="filter-actions"><button id="resources-all" type="button" data-i18n="selectAll">全选</button><button id="resources-none" type="button" data-i18n="selectNone">全不选</button></div>
+                </div>
+                <div id="resource-filters"></div>
+                <p class="muted" id="resource-status"></p>
+              </div></div>
+            </section>
+            <section class="filter-section">
+              <button class="section-toggle" aria-expanded="true" aria-controls="biome-body"><span class="ui-icon trees" aria-hidden="true"></span><span data-i18n="biomes">生物群系</span><span class="chevron" aria-hidden="true"></span></button>
+              <div id="biome-body" class="section-body"><div class="section-clip">
+                <label class="filter-row"><input type="checkbox" id="show-biomes" checked /><span class="filter-symbol"><span class="ui-icon check" aria-hidden="true"></span></span><span data-i18n="showBiomeMap">显示生物群系底图</span></label>
+                <label class="filter-row"><input type="checkbox" id="biome-highlight" /><span class="filter-symbol"><span class="ui-icon check" aria-hidden="true"></span></span><span id="biome-highlight-label">启用生物群系筛选</span></label>
+                <div class="biome-controls">
+                  <input id="biome-search" type="search" placeholder="搜索生物群系…" aria-label="搜索生物群系" />
+                  <div class="filter-actions"><button id="biomes-all" type="button" data-i18n="selectAll">全选</button><button id="biomes-none" type="button" data-i18n="selectNone">全不选</button></div>
+                </div>
+                <div id="biome-filters"></div>
+                <p id="biome-empty" class="muted" hidden></p>
+              </div></div>
+            </section>
+          </div>
+          <footer class="sidebar-tools">
+            <span id="count">0 个结构</span>
+            <button id="spawn" data-i18n="spawn">世界出生点</button>
+            <div class="button-row" hidden><button id="export-open" data-i18n="export">导出</button><button id="screenshot" data-i18n="screenshot">保存地图 PNG</button></div>
+          </footer>
+        </div>
       </aside>
-      <section id="detail" class="map-panel detail" hidden>
-        <button id="detail-close" class="close" aria-label="关闭详情">×</button
-        ><strong id="detail-title"></strong>
-        <div id="detail-content"></div>
-        <button id="copy-coordinates" data-i18n="copy">复制坐标</button>
-      </section>
-      <div id="no-map" class="map-panel no-map" hidden>
-        <strong data-i18n="unavailable">此维度底图尚未接入</strong>
-        <p id="no-map-note"></p>
-        <button id="view-end" data-i18n="viewEnd">查看末地地图</button>
-      </div>
-      <div class="zoom-controls map-panel">
-        <button id="zoom-in" aria-label="放大">+</button
-        ><button id="zoom-out" aria-label="缩小">−</button
-        ><button id="home" title="回到原点" aria-label="回到原点">⌖</button>
-      </div>
-      <div class="map-bottom">
-        <div class="map-panel coordinates">
-          <output id="coordinates">X: 0 · Z: 0</output
-          ><span id="biome-name"></span>
-        </div>
-        <div id="scale" class="scale">
-          <span id="scale-label">500 blocks</span>
-        </div>
-      </div>
-    </main>
-    <footer>
-      <form id="goto-form">
-        <span data-i18n="goto">前往</span
-        ><label
-          >X
-          <input
-            id="goto-x"
-            type="number"
-            min="-29999000"
-            max="29999000"
-            value="0"
-            required /></label
-        ><label
-          >Z
-          <input
-            id="goto-z"
-            type="number"
-            min="-29999000"
-            max="29999000"
-            value="0"
-            required /></label
-        ><button data-i18n="go">定位</button>
-      </form>
-      <span id="count">0 个结构</span
-      ><button id="screenshot" data-i18n="screenshot">保存地图 PNG</button
-      ><span class="footer-note" data-i18n="local">本地计算 · 无需登录</span>
-    </footer>
+    </div>
     <div id="toast" role="status" hidden></div>
-    <dialog id="settings-dialog">
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
       <form method="dialog" class="dialog-heading">
-        <h2 data-i18n="settings">设置</h2>
+        <h2 id="settings-title" data-i18n="settings">设置</h2>
         <button aria-label="关闭">×</button>
       </form>
+      <div hidden inert>
+      <label class="setting-row"><span data-i18n="biomeColor">生物群系配色</span><select id="color-biome"></select></label>
+      <div class="button-row"><input id="biome-color" type="color" aria-label="生物群系颜色" /><button id="reset-color" data-i18n="resetColor">恢复配色</button></div>
+      </div>
+      <section class="settings-section" aria-labelledby="gpu-setting-title">
+      <label class="setting-row" for="gpu-rendering"><span id="gpu-setting-title" data-i18n="gpuRendering">GPU 加速</span><output id="gpu-level-label" for="gpu-rendering">0 / 4 · 关闭</output></label>
+      <input id="gpu-rendering" type="range" min="0" max="4" step="1" value="0" aria-describedby="gpu-level-detail">
+      <div class="setting-ticks" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span></div>
+      <p id="gpu-level-detail" class="muted">使用兼容绘图和 CPU 计算。</p>
+      <div hidden inert>
+      <p id="gpu-note" class="muted" data-i18n="gpuNote">计算加速为实验功能，通过本机检查后启用，异常自动回退。档位控制计算范围，不代表显卡占用率；所有档位保持相同精度。</p>
+      <p id="gpu-status" class="muted" role="status" aria-live="polite">当前：兼容绘制</p>
+      <p id="gpu-compute-status" class="muted" role="status" aria-live="polite" hidden>计算：CPU</p>
+      <button id="gpu-retry" type="button" hidden data-i18n="gpuRetry">重试 GPU 加速</button>
+      </div>
+      </section>
+      <section class="settings-section" aria-labelledby="parallelism-setting-title">
+      <label class="setting-row" for="compute-parallelism"><span id="parallelism-setting-title" data-i18n="computeParallelism">计算并行度</span><output id="parallelism-label" for="compute-parallelism">1 个计算线程</output></label>
+      <input id="compute-parallelism" type="range" min="1" max="5" step="1" value="1">
+      <div class="setting-ticks" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span data-i18n="customParallelism">自定义</span></div>
+      <label id="custom-threads-row" class="setting-row" hidden><span data-i18n="customThreads">自定义线程数</span><input id="custom-threads" type="number" min="1" max="64" step="1" value="8" required></label>
+      <div hidden inert>
+      <p id="parallelism-note" class="muted">独立线程按需启动；更高档会增加内存和处理器开销。</p>
+      <p id="parallelism-status" class="muted" role="status" aria-live="polite"></p>
+      <button id="parallelism-retry" type="button" hidden data-i18n="retryParallelism">重新尝试增加线程</button>
+      </div>
+      </section>
+      <section class="settings-section" aria-labelledby="allocation-setting-title">
+      <label class="setting-row" for="compute-allocation"><span id="allocation-setting-title" data-i18n="computeAllocation">算力分配</span><output id="allocation-label" for="compute-allocation">速度优先</output></label>
+      <input id="compute-allocation" type="range" min="0" max="100" step="1" value="0">
+      <div class="setting-ticks" aria-hidden="true"><span data-i18n="allocationSpeed">速度优先</span><span data-i18n="allocationQuality">观感优先</span></div>
+      <div hidden inert>
+      <p id="allocation-status" class="muted" role="status" aria-live="polite"></p>
+      <p id="allocation-note" class="muted"></p>
+      </div>
+      </section>
+      <div hidden inert>
+      <div class="button-row"><button id="load-saved-spawn" type="button" data-i18n="loadSavedSpawn">读取 level.dat 出生点</button><button id="clear-saved-spawn" type="button" data-i18n="clearSavedSpawn" hidden>清除导入的出生点</button></div>
+      <input id="saved-spawn-file" type="file" accept=".dat" hidden>
+      <p class="muted" data-i18n="savedSpawnNote">仅读取所选本地文件，并切换到该存档种子；不读取区块，不上传文件，不修改存档。</p>
+      </div>
+      <section class="settings-section settings-motion">
       <label class="setting-row"
         ><span data-i18n="inertia">平滑拖动</span
         ><input id="inertia" type="checkbox" checked /></label
       ><label class="setting-row"
         ><span data-i18n="smooth">平滑地图图像</span
         ><input id="smooth" type="checkbox" /></label
-      ><label class="setting-row"
+      >
+      </section>
+      <div hidden inert>
+      <label class="setting-row"
         ><span data-i18n="chaos">生成混沌岛</span
         ><input id="chaos" type="checkbox" checked /></label
       ><label class="setting-row"
@@ -182,6 +197,7 @@
       ><button id="config-download" data-i18n="downloadConfig">
         下载当前配置
       </button>
+      </div>
     </dialog>
     <dialog id="export-dialog">
       <form method="dialog" class="dialog-heading">
@@ -191,6 +207,12 @@
       <p data-i18n="exportNote">
         导出当前维度、视野、显示模式及筛选条件内的标记。流体按区块中心导出初始产量（L/Op）；不代表存档当前余量。
       </p>
+      <label class="setting-row"><span data-i18n="exportRange">导出范围</span><select id="export-range-mode"><option value="view" data-i18n="currentView">当前视野</option><option value="custom" data-i18n="customRange">自定义坐标</option></select></label>
+      <div id="export-coordinates" hidden>
+        <label class="setting-row">min X <input id="export-minX" type="number" /></label><label class="setting-row">min Z <input id="export-minZ" type="number" /></label>
+        <label class="setting-row">max X <input id="export-maxX" type="number" /></label><label class="setting-row">max Z <input id="export-maxZ" type="number" /></label><p class="muted" data-i18n="exclusiveMax">范围不包含最大坐标。</p>
+      </div>
+      <label class="setting-row"><span data-i18n="fluidChunks">每个流体田导出的区块</span><select id="export-fluid-chunks"><option value="best" data-i18n="bestChunk">范围内最佳区块</option><option value="all" data-i18n="allChunks">全部合格区块</option></select></label>
       <label class="setting-row"
         ><span data-i18n="limit">最多坐标数</span
         ><input
@@ -212,12 +234,13 @@
         </button>
       </div>
       <p class="muted" data-i18n="exportFoot">
-        按坐标排序。超过上限时截断；高度为手动设置，不是地形高度。
+        标记分批扫描，达到上限即停止，可能尚未扫描完整视野。结果按坐标排序；小行星使用预测中心高度，已记录出生点使用存档高度，其他标记使用手动高度。
       </p>
+      <p id="export-progress" role="status" hidden></p><button id="export-cancel" hidden data-i18n="cancelExport">取消导出</button>
     </dialog>
-    <dialog id="about-dialog">
+    <dialog id="about-dialog" aria-labelledby="about-title">
       <form method="dialog" class="dialog-heading">
-        <h2 data-i18n="aboutTitle">来源与支持状态</h2>
+        <h2 id="about-title" data-i18n="aboutTitle">来源与支持状态</h2>
         <button aria-label="关闭">×</button>
       </form>
       <p data-i18n="disclaimer">
@@ -225,19 +248,34 @@
       </p>
       <p>
         <a
-          href="https://github.com/Invalidcod3/Amidst-GTNH/issues"
+          href="https://github.com/Invalidcod3/Chunkbase-GTNH"
           target="_blank"
           rel="noreferrer"
           data-i18n="contact"
-          >问题反馈 / 权利人联系</a
+          >源码仓库</a
         >
-        · <a href="./NOTICE.md" target="_blank">NOTICE</a> ·
+        ·
         <a href="./LICENSE.txt" target="_blank">GPL-3.0</a>
       </p>
-      <div id="capability-table"></div>
-      <p class="muted" data-i18n="saveFuture">
-        存档分析将在后续版本提供；当前不会读取或上传存档。
-      </p>
+      <section class="about-section" aria-labelledby="credits-title">
+        <h3 id="credits-title" data-i18n="creditsTitle">制作人员</h3>
+        <table class="credits-table" aria-labelledby="credits-title">
+          <thead><tr><th scope="col" data-i18n="creditsRole">参与项目</th><th scope="col" data-i18n="creditsAuthor">作者 / 团队</th></tr></thead>
+          <tbody>
+            <tr><th scope="row" data-i18n="webAuthor">网页作者</th><td>InvalidCode</td></tr>
+            <tr><th scope="row" data-i18n="amidstAuthor">Amidst 作者</th><td><span data-i18n="amidstContributors">Skidoodle（skiphs）及 Amidst 贡献者</span></td></tr>
+            <tr><th scope="row" data-i18n="gtnhAdaptation">Amidst-GTNH 适配</th><td>InvalidCode</td></tr>
+            <tr><th scope="row" data-i18n="modpackTeam">GTNH 整合包</th><td data-i18n="gtnhContributors">GT New Horizons 团队及贡献者</td></tr>
+            <tr><th scope="row" data-i18n="modAuthors">模组作者</th><td data-i18n="modContributors">各模组原作者与 GTNH 维护团队</td></tr>
+            <tr><th scope="row" data-i18n="translationAuthors">汉化贡献</th><td data-i18n="translationContributors">Kiwi 及 Translation-of-GTNH 贡献者</td></tr>
+          </tbody>
+        </table>
+      </section>
+      <section class="about-section" aria-labelledby="capabilities-title">
+        <h3 id="capabilities-title" data-i18n="capabilitiesTitle">维度支持状态</h3>
+        <div id="capability-table"></div>
+      </section>
+      <p id="package-info" class="muted">基础静态包</p>
     </dialog>
     <script type="module" src="./app.js"></script>
   </body>

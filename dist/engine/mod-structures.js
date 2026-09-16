@@ -27,7 +27,7 @@ export function validateModConfig(value = {}) {
 
 // Ported from the reference Worker's ModStructurePredictor/Ae2MeteoritePredictor.
 // Caller validates the area; all markers use native dimension block coordinates.
-export function predictModStructures({seed, dimension, bounds: b, config = {}}) {
+export function predictModStructures({seed, dimension, bounds: b, config = {}}, candidates) {
   if (!["overworld", "nether"].includes(dimension)) return [];
   const c = validateModConfig(config.modStructures), result = [];
   const add = (kind,x,z,source,certainty="POSSIBLE",subtype="") => {
@@ -46,14 +46,20 @@ export function predictModStructures({seed, dimension, bounds: b, config = {}}) 
     if(mx>=3 && mz>=3 && ((mx===p1 && mz===p2)||(mx===p1+1 && (mz===p2 || mz===p2+1))))
       add("LOOTGAMES_DUNGEON",x*16+8,z*16+8,"LootGames");
   });
-  if(dimension === "nether" ? c.slimeNetherEnabled : c.slimeOverworldEnabled) visit(16,16,(x,z)=>{
+  if(dimension === "nether" ? c.slimeNetherEnabled : c.slimeOverworldEnabled) {
+    if(candidates?.slime)result.push(...candidates.slime);
+    else visit(16,16,(x,z)=>{
     if(forgeRandom(seed,x,z).nextInt(c.slimeRarity)===0)
       add(dimension === "nether" ? "TINKERS_NETHER_SLIME_ISLAND" : "TINKERS_SLIME_ISLAND",x*16+16,z*16+16,"Tinkers' Construct","EXPECTED");
   });
-  if(dimension === "nether" && c.netherSpiresEnabled) visit(4,9,(x,z)=>{
+  }
+  if(dimension === "nether" && c.netherSpiresEnabled) {
+    if(candidates?.spires)result.push(...candidates.spires);
+    else visit(4,9,(x,z)=>{
     const r=forgeRandom(seed,x,z);
     if(r.nextInt(c.netherSpireChance)===0) add("AUTOMAGY_NETHER_SPIRE",x*16+r.nextInt(6)+4,z*16+r.nextInt(6)+4,"Automagy");
   });
+  }
   if(dimension === "overworld" && c.meteoritesEnabled) {
     const distance=c.meteoriteDistance,margin=Math.max(1,Math.trunc(distance/10)),span=distance-2*margin;
     const x0=Math.floor((b.minX-(distance-margin-1))/distance),x1=Math.floor((b.maxX-1-margin)/distance);

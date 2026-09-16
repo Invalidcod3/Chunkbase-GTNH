@@ -19,6 +19,9 @@ public final class FastKernel {
  private RwgBiomeGrid.Entry sampleGridPoint(int x,int z){RealisticBiomeBase b=manager.getBiomeDataAt(x,z);return new RwgBiomeGrid.Entry(b,b.biomeID);}
  private float getSelectionNoise(int x,int z){return manager.perlin.noise2(x/15.0F,z/15.0F);}
  public int[] selected(int cx,int cz){BlendChunk b=getBlendChunk(cx,cz);int[] result=new int[256];for(int i=0;i<256;i++)result[i]=b.getRealisticBiome(i%16,i/16).biomeID;return result;}
+ // Like SurfaceBiomeSampler's lazy selectedBiomes path: preserve the exact
+ // interpolation and selection noise, but evaluate only requested columns.
+ public int selectedAt(int x,int z){return getBlendChunk(x>>4,z>>4).getRealisticBiome(x&15,z&15).biomeID;}
  public float height(int x,int z){return getBlendedTerrainHeight(x,z,manager.getRiverStrength(x,z));}
         private BlendChunk getBlendChunk(int chunkX, int chunkZ)
                  {

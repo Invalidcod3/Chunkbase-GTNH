@@ -17,7 +17,8 @@ test('Twilight raster strips preserve namespace palettes and arbitrary query spl
 test('Twilight malformed tiles fail without poisoning later requests and cancellation stops queued strips',async()=>{
   const f=fixture(),generate=f.engine.biomes;f.engine.biomes=()=>[];
   await assert.rejects(f.provider.sampleBiomes(q),/不完整/);f.engine.biomes=generate;assert.equal((await f.provider.sampleBiomes(q)).length,1056);
-  const controller=new AbortController(),g=fixture({yieldTask:async()=>controller.abort()});
+  let time=0;
+  const controller=new AbortController(),g=fixture({yieldTask:async()=>controller.abort(),now:()=>time+=20});
   await assert.rejects(g.provider.sampleBiomes(q,{signal:controller.signal}),/CANCELLED/);assert.equal(g.calls,1);
   await assert.rejects(f.provider.sampleBiomes({...q,x:1}),/对齐/);
   await assert.rejects(f.provider.sampleBiomes({...q,config:{dimensionIds:{twilight:99}}}),/ID/);
@@ -28,4 +29,30 @@ test('individual Twilight landmark filters retain original wire kind and subtype
   assert.equal(filtered.length,1);assert.equal(filtered[0].kind,'TWILIGHT_FEATURE');assert.equal(filtered[0].subtype,'HEDGE_MAZE');
   assert.deepEqual(MapView.prototype.visibleMarkers.call({markers:all,filtered:new Set(['TWILIGHT_LICH_TOWER'])}),filtered);
   assert.deepEqual(await p.predictStructures({...query,excludedKinds:['TWILIGHT_FEATURE']}),[]);
+});
+
+test('coarse Twilight samples batch source rectangles and retain exact coordinates at every supported stride',async()=>{
+  for(const step of [1,2,3,4,5,8,16,32,64,128,256]) {
+    const f=fixture();let largest=0;
+    const original=f.engine.biomes;
+    f.engine.biomes=(x,z,w,h,...rest)=>{largest=Math.max(largest,w*h);return original(x,z,w,h,...rest);};
+    const query={...q,x:-260,z:-516,width:64,height:64,step};
+    const actual=await f.provider.sampleBiomes(query),scale=step>=4?4:1;
+    for(let row=0;row<64;row++)for(let col=0;col<64;col++) {
+      const expected=(Math.floor((query.x+col*step)/scale)+Math.floor((query.z+row*step)/scale))%2?3:7;
+      assert.equal(actual[row*64+col],expected);
+    }
+    assert.ok(largest<=8192);
+    if(step===8)assert.ok(f.calls<=4);
+  }
+});
+
+test('unaligned full-resolution rectangles pad Voronoi inputs without exposing padding in the result',async()=>{
+  const f=fixture(),original=f.engine.biomes;
+  f.engine.biomes=(x,z,w,h,quarter)=>{if(!quarter){assert.equal(w%4,0);assert.equal(h%4,0);}return original(x,z,w,h,quarter);};
+  for(const step of [1,2,3]) {
+    const query={...q,x:-517,z:-1031,width:19,height:17,step};
+    const data=await f.provider.sampleBiomes(query);assert.equal(data.length,19*17);
+    for(let row=0;row<17;row++)for(let col=0;col<19;col++)assert.equal(data[row*19+col],(query.x+col*step+query.z+row*step)%2?3:7);
+  }
 });

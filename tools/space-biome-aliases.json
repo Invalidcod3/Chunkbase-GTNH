@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "generatorProfileSha256": "88667765d0d70a2d7fba9a2ff96426a20fe4eaf65cca1a972890d4e141ce6775",
+  "graph": "rwg_vanilla",
+  "aliases": {"161": 160},
+  "evidence": "GTNH 2.9.0-beta-3, live Worker protocol 21: seed 9223372036854775807, x=-517, z=-1031, 19x35, step=128. Registry slot 161 resolves to reported biome ID 160 in both Ross128b and Deep Dark. Apply before dimension replacements and display offsets."
+}

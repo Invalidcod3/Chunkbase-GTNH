@@ -2,13 +2,21 @@
 
 本项目为非官方 GTNH 种子预览工具。预测不保证世界中实际生成的结果；模组名称及素材归各自权利人所有。
 
-问题反馈、来源更正和权利人联系：[Amidst-GTNH 项目 Issues](https://github.com/Invalidcod3/Amidst-GTNH/issues)。
+源码、问题反馈和来源更正：[Chunkbase-GTNH](https://github.com/Invalidcod3/Chunkbase-GTNH)。
 
 ## 代码
 
-地图交互和部分预测逻辑移植自 [Amidst-GTNH](https://github.com/Invalidcod3/Amidst-GTNH)，参考提交为 `c5e09fedf99ee211b8073d38060b048fb4e03179`。该参考项目包含 Amidst 及其贡献者的工作。随附 `LICENSE.txt` 为 GPL-3.0；Web 移植代码遵循该许可。新仓库尚未发布，源码位于本地独立 Web 仓库；对外提供网页包时应同时提供对应源码。
+地图交互和部分预测逻辑移植自 [Amidst-GTNH](https://github.com/Invalidcod3/Amidst-GTNH)，参考提交为 `c5e09fedf99ee211b8073d38060b048fb4e03179`。该参考项目包含 Amidst 及其贡献者的工作。随附 `LICENSE.txt` 为 GPL-3.0；Web 移植代码遵循该许可。网页作者为 InvalidCode，源码仓库为 [Chunkbase-GTNH](https://github.com/Invalidcod3/Chunkbase-GTNH)，完整部署包应同时提供对应的 `chunkbase-gtnh-source.zip`。
 
 ## 模组与图标
+
+矿物译名对照 [Kiwi233/Translation-of-GTNH](https://github.com/Kiwi233/Translation-of-GTNH)，固定版本 `d2635d9e7137f7886ad29f9d20c8b445cefa9e09`，感谢 Kiwi 及该项目贡献者。本页提取实际使用的材料名称，用于界面显示和双语搜索；没有更改预测标识或采集记录。汉化项目 README 标注翻译内容采用 CC-BY-NC-SA，同时仓库附有 MIT LICENSE；原始许可与来源清单随附于 `i18n/Translation-of-GTNH-LICENSE.txt`、`i18n/Translation-of-GTNH-NOTICE.txt` 和 `i18n/resource-translation-sources.json`。
+
+Chunkbase NH 页面主题来自维护者提供的 Illustrator / PDF 设计。NH 标志为源稿中的矢量图形；界面 SVG 和 Minecraft / Minecraft Ten 字体来自同目录所附素材，维度后备方块图标来自原 Amidst 的 profileicons。此说明记录素材来源，不改变其原有权利归属。
+
+维度立体图标 `assets/ui/dimension-*.png` 使用本地 GT5-Unofficial 源码中的 `assets/gtneioreplugin/textures/blocks/*_{top,front,right}.png`，对应 `DimensionHelper` 的缩写映射。通过 `tools/ImportDimensionIcons.java` 按 Amidst `ProspectingTextures.dimensionIcon` 相同的最近邻采样和三面仿射变换生成；原素材权利归其作者所有。NH 矢量标志同时用于浏览器标签页图标。
+
+资源图标 `assets/resources/` 复用本地采集的 GT/Visual Prospecting 矿石贴图。小行星优先匹配相同维度、相同矿脉的贴图，否则复用同矿物贴图；冰矿脉按 GT5 OreMixes 的主要矿物、MaterialBuilder 的材质与配色叠加在浮冰上。流体使用 GT5、IC2、GalaxySpace 和 Minecraft 的静态首帧，自动生成的流体使用对应材质色。筛选中的矿物图标使用相同立方体投影与侧面明暗，流体保持平面。`tools/import-resource-icons.py` 与 `tools/RenderResourceIcons.java` 可重建这些显示素材，图标目录不包含预测参数、存档或运行时代码。
 
 当前使用的模组标记来自旧项目已跟踪图标，逐个对应原地图中的图标。来源包括 Minecraft、Hardcore Ender Expansion、Draconic Evolution、Galacticraft 和 GalaxySpace。保留来源不意味着这些第三方素材自动适用项目的 GPL 许可。
 

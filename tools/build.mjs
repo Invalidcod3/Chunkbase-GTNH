@@ -22,12 +22,6 @@ async function collect(directory, prefix = "") {
   return files.sort(([a], [b]) => a.localeCompare(b));
 }
 const files = await collect(path.join(root, "dist"));
-files.push([
-  "HOW-TO-RUN.txt",
-  new TextEncoder().encode(
-    "Static HTTP hosting only; no application backend or CDN dependency.\nServe this directory with any static HTTP server.\nOpening index.html with file:// is unsupported because browsers restrict ES modules and workers.\nThis development preview has partial world generation support. See NOTICE.md.\n",
-  ),
-]);
 const out = path.join(root, "artifacts");
 await mkdir(out, { recursive: true });
 const target = path.join(out, "amidst-gtnh-web-static.zip");
@@ -41,7 +35,7 @@ console.log(
   `Packaged ${files.length} files (${Math.round(buffer.length / 1024)} KiB): artifacts/amidst-gtnh-web-static.zip`,
 );
 const sourceFiles = [];
-for (const name of ["dist", "docs", "tests", "tools"])
+for (const name of ["dist", "docs", "tests", "tools", "deploy", ".github"])
   for (const entry of await collect(path.join(root, name), name + "/"))
     if (!entry[0].includes("__pycache__/") && !entry[0].endsWith(".pyc"))
       sourceFiles.push(entry);
@@ -52,7 +46,6 @@ for (const name of [
   ".gitattributes",
   "package.json",
   "reference-lock.json",
-  ".openai/hosting.json",
 ])
   sourceFiles.push([
     name,

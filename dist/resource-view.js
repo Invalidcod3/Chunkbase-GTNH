@@ -1,4 +1,6 @@
 // Geometry, opacity and zoom thresholds follow the reference ProspectingOverlay.
+import {depositIcon} from './resource-icons.js';
+import {resourceName} from './resource-names.js';
 export function drawResources(view,c) {
   const deposits=view.visibleResources(),scale=view.scale;
   c.save();c.imageSmoothingEnabled=false;
@@ -14,11 +16,12 @@ export function drawResources(view,c) {
     const p=view.screen(d.x,d.z);
     if(!d.amounts){
       const size=Math.max(10,Math.min(32,24*scale));
-      let image=d.icon ? view.resourceImages.get(d.icon) : null;
-      if(d.icon && !image){image=new Image();image.onload=()=>view.dirty=true;image.src='data:image/png;base64,'+d.icon;view.resourceImages.set(d.icon,image);if(view.resourceImages.size>512)view.resourceImages.delete(view.resourceImages.keys().next().value);}
+      const source=depositIcon(view.dimension,d);
+      let image=source ? view.resourceImages.get(source) : null;
+      if(source && !image){image=new Image();image.onload=()=>view.dirty=true;image.src=source;view.resourceImages.set(source,image);if(view.resourceImages.size>512)view.resourceImages.delete(view.resourceImages.keys().next().value);}
       if(image?.complete && image.naturalWidth){const height=size*image.naturalHeight/image.naturalWidth;c.drawImage(image,p.x-size/2,p.y-height/2,size,height);}
       else {c.fillStyle=d.color;c.fillRect(p.x-size/2,p.y-size/2,size,size);}
-      if(48*scale>=95){c.textAlign='center';label(d.name,p.x,p.y+size/2+15);c.textAlign='left';}
+      if(48*scale>=95){c.textAlign='center';label(resourceName(d,view.language),p.x,p.y+size/2+15);c.textAlign='left';}
     }else{
       const threshold=view.resourceFilter.minimum,values=d.amounts.filter(a=>a>=threshold),min=Math.min(...values),max=Math.max(...d.amounts),cell=16*scale,field=Math.ceil(128*scale);
       if(!values.length)continue;
@@ -32,7 +35,7 @@ export function drawResources(view,c) {
         if(cell>=58)label(amount+' L/Op',cp.x+3,cp.y+cell/2+4);
       }
       c.strokeStyle=d.color+'cc';c.lineWidth=2;c.strokeRect(p.x,p.y,field,field);
-      if(field>=120){label(d.name,p.x+5,p.y+16);if(cell>=20&&cell<58)label(`${min}–${max} L/Op`,p.x+5,p.y+32);}
+      if(field>=120){label(resourceName(d,view.language),p.x+5,p.y+16);if(cell>=20&&cell<58)label(`${min}–${max} L/Op`,p.x+5,p.y+32);}
     }
     if(view.selected===d){c.strokeStyle='#f4d968';c.lineWidth=2;c.strokeRect(p.x-12,p.y-12,24,24);}
   }

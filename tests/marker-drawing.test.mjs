@@ -15,6 +15,6 @@ test('the real 20×26 village asset renders at its natural aspect ratio without 
 test('ore icons preserve their aspect ratio and do not receive an extra gray frame',()=>{
  const drawn=[],rects=[],image={complete:true,naturalWidth:20,naturalHeight:26};
  const ctx=new Proxy({},{get:(_,k)=>(...args)=>{if(k==='drawImage')drawn.push(args);if(k==='strokeRect')rects.push(args);}});
- drawResources({markerMode:'ORES',scale:1,resourceImages:new Map([['test',image]]),visibleResources:()=>[{id:'test',name:'Ore',icon:'test',x:0,z:0,color:'#ffffff'}],screen:()=>({x:50,y:50})},ctx);
+ drawResources({markerMode:'ORES',scale:1,resourceImages:new Map([['data:image/png;base64,test',image]]),visibleResources:()=>[{id:'test',name:'Ore',icon:'test',x:0,z:0,color:'#ffffff'}],screen:()=>({x:50,y:50})},ctx);
  assert.deepEqual(drawn,[[image,38,34.4,24,31.2]]);assert.deepEqual(rects,[]);
 });

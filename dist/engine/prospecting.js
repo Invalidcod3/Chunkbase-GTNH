@@ -1,6 +1,7 @@
 import { JavaRandom, long, parseSeed } from './random.js';
 import { validateBounds } from './native.js';
 import { validateResources } from './resources.js';
+import {asteroidDimensions,validateAsteroidResources,selectAsteroidResource,createFreshEndClassifier} from './asteroid-resources.js';
 
 // GT XSTR keeps the seed directly; nextInt uses signed remainder, not Random's rejection loop.
 export class XstrRandom extends JavaRandom {
@@ -65,9 +66,11 @@ export function validateProspectingProfile(profile) {
   return profile;
 }
 
-export function createProspectingProvider(input, dimensionIds, { yieldTask = () => new Promise(r => setTimeout(r,0)), now = () => performance.now() } = {}) {
+export function createProspectingProvider(input, dimensionIds, { asteroidProfile, yieldTask = () => new Promise(r => setTimeout(r,0)), now = () => performance.now() } = {}) {
   // Clone once: later configuration edits cannot silently change an installed profile.
   const profile = validateProspectingProfile(structuredClone(input));
+  const ap=asteroidProfile?validateAsteroidResources(structuredClone(asteroidProfile)):null;
+  const asteroidDefs=new Map(ap?.dimensions.map(d=>[d.id,d])||[]);
   const ids = {...dimensionIds}, dimensions = new Map(profile.dimensions.map(d => [d.id,d]));
   return { apiVersion: 1, async predictResources(q, { signal } = {}) {
     const seed = BigInt(parseSeed(q.seed)); validateBounds(q.bounds, 16777216);
@@ -78,13 +81,16 @@ export function createProspectingProvider(input, dimensionIds, { yieldTask = () 
     if (q.config?.dimensionIds?.[q.dimension] !== undefined && q.config.dimensionIds[q.dimension] !== id)
       throw new Error('维度 ID 已改变，请重新导出匹配的资源配置包');
     const fluids = q.mode === 'FLUID', entries = fluids ? d.fluids : d.ores;
-    if (!entries?.length) return null;
+    const asteroid=fluids?null:asteroidDefs.get(id);
+    if(!fluids&&asteroidDimensions.has(q.dimension)&&!asteroid)throw new Error('缺少已校准的小行星资源配置，请重新采集并安装资源包');
+    if (!entries?.length&&!asteroid) return null;
+    const isVoid=asteroid?.routing==='end'?createFreshEndClassifier(seed,ap.end,q.config):()=>true;
     const stride = fluids ? 8 : 1, b = q.bounds, result = [];
     const minX = Math.floor(b.minX / (16*stride))*stride, minZ = Math.floor(b.minZ / (16*stride))*stride;
     const endX = Math.floor((b.maxX-1) / (16*stride))*stride, endZ = Math.floor((b.maxZ-1) / (16*stride))*stride;
     if (((endX-minX)/stride+1)*((endZ-minZ)/stride+1)>65536)
       throw new Error('资源查询区块过多，请放大地图或缩小导出范围');
-    const total = fluids ? d.fluidWeight : entries.reduce((n,e) => n + e.weight,0);
+    const total = fluids ? d.fluidWeight : (entries||[]).reduce((n,e) => n + e.weight,0);
     let deadline = now()+16;
     for (let cz=minZ;cz<=endZ;cz+=stride) for(let cx=minX;cx<=endX;cx+=stride) {
       if (fluids) {
@@ -96,6 +102,10 @@ export function createProspectingProvider(input, dimensionIds, { yieldTask = () 
           roll -= weight;
         }
         if (chosen?.display) result.push({...chosen.display,kind:'FLUID_FIELD',source:'INITIAL',x:cx*16,z:cz*16,size:128,amounts:fluidAmounts(chosen,random)});
+      } else if(asteroid&&isVoid(cx,cz)) {
+        const deposit=selectAsteroidResource(seed,id,cx,cz,asteroid);
+        if(deposit&&deposit.x>=b.minX&&deposit.x<b.maxX&&deposit.z>=b.minZ&&deposit.z<b.maxZ)
+          result.push({...deposit,certainty:asteroid.routing==='end'?'EXACT_FRESH_END':'POSSIBLE'});
       } else {
         const mod = x => profile.orePattern === 'EQUAL_SPACING' ? (x%3+3)%3 : Math.abs(x)%3;
         if (mod(cx)===1 && mod(cz)===1 && total>0) {
@@ -105,7 +115,7 @@ export function createProspectingProvider(input, dimensionIds, { yieldTask = () 
             for(const entry of entries) {
               roll -= entry.weight;
               if(roll<0) {
-                if(entry.display!==null) result.push({...profile.ores[entry.display],kind:'ORE_VEIN',source:'PREDICTED',size:16,x:cx*16+8,z:cz*16+8});
+                if(entry.display!==null) result.push({...profile.ores[entry.display],kind:'ORE_VEIN',source:'PREDICTED',size:16,x:cx*16+8,z:cz*16+8,...(asteroid?.routing==='end'?{certainty:'EXACT_FRESH_END'}:{})});
                 break;
               }
             }

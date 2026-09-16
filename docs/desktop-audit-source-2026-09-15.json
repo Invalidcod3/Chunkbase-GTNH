@@ -1,0 +1,18 @@
+{
+  "capturedAt": "2026-09-15T09:17:22.490Z",
+  "source": "C:\\Users\\28317\\Documents\\ChatGPT\\Amidst-GTNH",
+  "state": "uncommitted local working copy; point-in-time audit",
+  "files": {
+    "gtnh-worker/src/main/java/amidst/gtnh/worker/BiomeWorkerServer.java": "498fa349a2bf37427bb0e3a8e42fc2ce1b334f191e1c401d26a5ddbc18ebbc4b",
+    "gtnh-worker/src/main/java/amidst/gtnh/worker/MapCacheIdentity.java": "82e00c223b38b3153afe5965acacec749c2a3fd261675ada4f88f1087c3d6b2f",
+    "gtnh-worker/src/main/java/amidst/gtnh/worker/AdditionalDimensionBiomes.java": "4945339a5d64471c8a6e2fe16ee667028ee4963c8c69acd7d49c3041ba00c743",
+    "src/main/java/amidst/gtnh/cache/MapStorage.java": "592923706106d4502b04459dad74e64e85ed48b5ef41277e90c3cf9ccd9c0c70",
+    "src/main/java/amidst/gtnh/cache/MapViewState.java": "6901a2ad243aa8229006378aef8070c15d79705620f48ec991efff2d341d6564",
+    "src/main/java/amidst/gtnh/export/RadialCoordinateLocator.java": "bc1a748fc9c6aeb8f4f672a0a1a5f3ae9767fd15eeb040e4e415bcc827d57ec2",
+    "src/main/java/amidst/gtnh/export/JourneyMapAutoImport.java": "d9d4212a9978862b41ec3ecfc44665b5657328528d8ac77a51a680ef08e9cd15",
+    "src/main/java/amidst/gtnh/export/GtnhMapWaypoint.java": "e0a345a59be2282a17e30df3cd4831012119a04bf60b974e54c8826d09c7a928",
+    "src/main/java/amidst/gtnh/worker/GtnhBiomeColorPalette.java": "a2afe553df734fa44313e0b02f02bd1584e63d2981534c3b778324a68287c93e",
+    "src/main/resources/amidst/i18n/zh_CN.json": "2e37b148e94e342e166e70a0744a7a5e36fac96d2b6f65167da1477413178ab2"
+  },
+  "workerProtocol": 23
+}

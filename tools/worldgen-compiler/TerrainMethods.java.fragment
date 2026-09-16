@@ -14,19 +14,39 @@
         if(cx < -1874999 || cx > 1874999 || cz < -1874999 || cz > 1874999)throw new IllegalArgumentException("Chunk outside world bounds");
         int[] ids=fast.selected(cx,cz),result=new int[256];
         for(int i=0;i<256;i++){
-            int id=ids[i],x=cx*16+i%16,z=cz*16+i/16;
-            result[i]=riverAt(x,z)?RuntimeObjects.RIVER[id]:RuntimeObjects.BASE[id];
+            result[i]=finalBiome(ids[i],cx*16+i%16,cz*16+i/16);
+        }
+        return result;
+    }
+    // This pinned adapter's only biome-writing surface is the reviewed,
+    // point-local DuneValley expression below. Unknown surfaces remain rejected
+    // by the compiler's reviewed surface hash allowlist; this is not a generic
+    // shortcut for Forge callbacks.
+    @JSExport public static int[] finalSamples(int x,int z,int width,int height,int step) {
+        ready();
+        if(width<1||height<1||(long)width*height>262144||step<1||step>256
+            ||x < -29999983||z < -29999983
+            ||(long)x+(width-1L)*step>29999983||(long)z+(height-1L)*step>29999983)
+            throw new IllegalArgumentException("Samples outside world bounds");
+        int[] result=new int[width*height];
+        for(int row=0;row<height;row++)for(int col=0;col<width;col++) {
+            int px=x+col*step,pz=z+row*step;
+            result[row*width+col]=finalBiome(fast.selectedAt(px,pz),px,pz);
+        }
+        return result;
+    }
+    private static int finalBiome(int id,int x,int z) {
+            int result=riverAt(x,z)?RuntimeObjects.RIVER[id]:RuntimeObjects.BASE[id];
             float[] valleys=RuntimeObjects.VALLEYS[id];
-            if(valleys.length==0)continue;
+            if(valleys.length==0)return result;
             int top=Math.min(255,(int)fast.height(x,z));
-            if(top<0)continue;
+            if(top<0)return result;
             for(int n=0;n<valleys.length;n++){
                 float valley=(manager.perlin.noise2(x/valleys[n],z/valleys[n])+0.25F)*65.0F;
                 valley=valley<1.0F?1.0F:valley;
                 if(!(top<=90.0F+manager.perlin.noise2(x/24.0F,z/24.0F)*10.0F-valley
-                    &&(manager.perlin.noise2(x/12.0F,z/12.0F)>=-0.28F||!RuntimeObjects.MIX[id][n])))result[i]=RuntimeObjects.DESERT;
+                    &&(manager.perlin.noise2(x/12.0F,z/12.0F)>=-0.28F||!RuntimeObjects.MIX[id][n])))result=RuntimeObjects.DESERT;
             }
-        }
         return result;
     }
     @JSExport public static float[] fastHeights(int cx,int cz){

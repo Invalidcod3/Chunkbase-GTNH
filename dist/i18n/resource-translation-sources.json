@@ -1,0 +1,1327 @@
+{
+  "files": [
+    {
+      "path": "resources/GregTech[gregtech]/lang/zh_CN.lang",
+      "sha256": "3531baee7c490de3d0f9a0ba3659042193efea716ad90224b30c9ea2168be88f",
+      "file": "gregtech-zh_CN.lang"
+    },
+    {
+      "path": "GregTech.lang",
+      "sha256": "dd50bd021f48334f81a0da7787e061afcad132ad664b940f5e8f584c2ec5e8cf",
+      "file": "GregTech.lang"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "fe85249ba3266352c9ea50e7dc4bb9c5ade588a95fc6532b38d65e283bab130d",
+      "file": "LICENSE"
+    },
+    {
+      "path": "resources/GregTech[miscutils]/lang/zh_CN.lang",
+      "sha256": "c5b6c1964fb3898a6a6bf4aab88fb0da0dce79b89daaecb0c9a0c2e0c4db4057",
+      "file": "miscutils-zh_CN.lang"
+    },
+    {
+      "path": "resources/GregTech[bartworks]/lang/zh_CN.lang",
+      "sha256": "868b9003ef0daaf52f1bfff5c5e3f1d4662e572f300e0de2b517a3e19e8512e1",
+      "file": "bartworks-zh_CN.lang"
+    },
+    {
+      "path": "README.md",
+      "sha256": "141c0d2413241c850018e6318af33f51e833ab2de949cc0335313a66d2a88699",
+      "file": "README.md"
+    },
+    {
+      "path": "GregTech_US.lang",
+      "sha256": "3084c87acfca627a97773a8bea03a67ad2dac829e0b3743005233213b52c7946",
+      "file": "GregTech_US.lang"
+    }
+  ],
+  "revision": "d2635d9e7137f7886ad29f9d20c8b445cefa9e09",
+  "repository": "https://github.com/Kiwi233/Translation-of-GTNH",
+  "translationNotice": "README: translation content is CC-BY-NC-SA; repository LICENSE: MIT. See bundled notices.",
+  "entries": [
+    {
+      "key": "Material.adamantium",
+      "en": "Adamantium",
+      "zh": "精金"
+    },
+    {
+      "key": "Material.alduorite",
+      "en": "Alduorite",
+      "zh": "神秘蓝金"
+    },
+    {
+      "key": "Material.almandine",
+      "en": "Almandine",
+      "zh": "铁铝榴石"
+    },
+    {
+      "key": "Material.aluminium",
+      "en": "Aluminium",
+      "zh": "铝"
+    },
+    {
+      "key": "Material.alunite",
+      "en": "Alunite",
+      "zh": "明矾石"
+    },
+    {
+      "key": "Material.amber",
+      "en": "Amber",
+      "zh": "琥珀"
+    },
+    {
+      "key": "Material.amethyst",
+      "en": "Amethyst",
+      "zh": "紫水晶"
+    },
+    {
+      "key": "Material.ammonia",
+      "en": "Ammonia",
+      "zh": "氨"
+    },
+    {
+      "key": "Material.andradite",
+      "en": "Andradite",
+      "zh": "钙铁榴石"
+    },
+    {
+      "key": "Material.antimony",
+      "en": "Antimony",
+      "zh": "锑"
+    },
+    {
+      "key": "Material.apatite",
+      "en": "Apatite",
+      "zh": "磷灰石"
+    },
+    {
+      "key": "Material.ardite",
+      "en": "Ardite",
+      "zh": "阿迪特"
+    },
+    {
+      "key": "Material.arsenic",
+      "en": "Arsenic",
+      "zh": "砷"
+    },
+    {
+      "key": "Material.arsenopyrite",
+      "en": "Arsenopyrite",
+      "zh": "砷黄铁"
+    },
+    {
+      "key": "Material.asbestos",
+      "en": "Asbestos",
+      "zh": "石棉"
+    },
+    {
+      "key": "Material.bandediron",
+      "en": "Banded Iron",
+      "zh": "带状铁矿"
+    },
+    {
+      "key": "Material.barite",
+      "en": "Barite",
+      "zh": "重晶石"
+    },
+    {
+      "key": "Material.bartimaeusnek",
+      "en": "BArTiMaEuSNeK",
+      "zh": "BArTiMaEuSNeK"
+    },
+    {
+      "key": "Material.basalticmineralsand",
+      "en": "Basaltic Mineral Sand",
+      "zh": "玄武岩矿砂"
+    },
+    {
+      "key": "Material.bastnasite",
+      "en": "Bastnasite",
+      "zh": "氟碳镧铈矿"
+    },
+    {
+      "key": "Material.bauxite",
+      "en": "Bauxite",
+      "zh": "铝土矿"
+    },
+    {
+      "key": "Material.bedrockium",
+      "en": "Bedrockium",
+      "zh": "基岩"
+    },
+    {
+      "key": "Material.bentonite",
+      "en": "Bentonite",
+      "zh": "膨润土"
+    },
+    {
+      "key": "Material.beryllium",
+      "en": "Beryllium",
+      "zh": "铍"
+    },
+    {
+      "key": "Material.bismuth",
+      "en": "Bismuth",
+      "zh": "铋"
+    },
+    {
+      "key": "Material.bismuthinite",
+      "en": "Bismuthinite",
+      "zh": "辉铋"
+    },
+    {
+      "key": "Material.bismutite",
+      "en": "Bismutite",
+      "zh": "泡铋"
+    },
+    {
+      "key": "Material.blackplutonium",
+      "en": "Black Plutonium",
+      "zh": "黑钚"
+    },
+    {
+      "key": "Material.bluetopaz",
+      "en": "Blue Topaz",
+      "zh": "蓝黄玉"
+    },
+    {
+      "key": "Material.borax",
+      "en": "Borax",
+      "zh": "硼砂"
+    },
+    {
+      "key": "Material.bornite",
+      "en": "Bornite",
+      "zh": "斑铜"
+    },
+    {
+      "key": "Material.brownlimonite",
+      "en": "Brown Limonite",
+      "zh": "棕褐铁矿"
+    },
+    {
+      "key": "Material.cadmium",
+      "en": "Cadmium",
+      "zh": "镉"
+    },
+    {
+      "key": "Material.caesium",
+      "en": "Caesium",
+      "zh": "铯"
+    },
+    {
+      "key": "Material.calcite",
+      "en": "Calcite",
+      "zh": "方解石"
+    },
+    {
+      "key": "Material.callistoice",
+      "en": "Callisto Ice",
+      "zh": "木卫四冰"
+    },
+    {
+      "key": "Material.carbon",
+      "en": "Carbon",
+      "zh": "碳"
+    },
+    {
+      "key": "Material.carbondioxide",
+      "en": "Carbon Dioxide",
+      "zh": "二氧化碳"
+    },
+    {
+      "key": "Material.carbonmonoxide",
+      "en": "Carbon Monoxide",
+      "zh": "一氧化碳"
+    },
+    {
+      "key": "Material.cassiterite",
+      "en": "Cassiterite",
+      "zh": "锡石"
+    },
+    {
+      "key": "Material.cassiteritesand",
+      "en": "Cassiterite Sand",
+      "zh": "锡石矿砂"
+    },
+    {
+      "key": "Material.cerium",
+      "en": "Cerium",
+      "zh": "铈"
+    },
+    {
+      "key": "Material.certusquartz",
+      "en": "Certus Quartz",
+      "zh": "赛特斯石英"
+    },
+    {
+      "key": "Material.ceruclase",
+      "en": "Ceruclase",
+      "zh": "暗影秘银"
+    },
+    {
+      "key": "Material.chalcopyrite",
+      "en": "Chalcopyrite",
+      "zh": "黄铜矿"
+    },
+    {
+      "key": "Material.chargedcertusquartz",
+      "en": "Charged Certus Quartz",
+      "zh": "充能赛特斯石英"
+    },
+    {
+      "key": "Material.chlorobenzene",
+      "en": "Chlorobenzene",
+      "zh": "氯苯"
+    },
+    {
+      "key": "Material.chrome",
+      "en": "Chrome",
+      "zh": "铬"
+    },
+    {
+      "key": "Material.chromite",
+      "en": "Chromite",
+      "zh": "铬铁矿"
+    },
+    {
+      "key": "Material.chromo-alumino-povondraite",
+      "en": "Chromo-Alumino-Povondraite",
+      "zh": "铬铝电气石"
+    },
+    {
+      "key": "Material.chrysotile",
+      "en": "Chrysotile",
+      "zh": "白石棉"
+    },
+    {
+      "key": "Material.cinnabar",
+      "en": "Cinnabar",
+      "zh": "朱砂"
+    },
+    {
+      "key": "Material.coal",
+      "en": "Coal",
+      "zh": "煤"
+    },
+    {
+      "key": "Material.cobaltite",
+      "en": "Cobaltite",
+      "zh": "辉钴矿"
+    },
+    {
+      "key": "Material.cooperite",
+      "en": "Sheldonite",
+      "zh": "硫铂矿"
+    },
+    {
+      "key": "Material.copper",
+      "en": "Copper",
+      "zh": "铜"
+    },
+    {
+      "key": "Material.cosmicneutronium",
+      "en": "Cosmic Neutronium",
+      "zh": "宇宙中子态素"
+    },
+    {
+      "key": "Material.cryolite",
+      "en": "Cryolite",
+      "zh": "冰晶石"
+    },
+    {
+      "key": "Material.deepiron",
+      "en": "Deep Iron",
+      "zh": "深渊铁"
+    },
+    {
+      "key": "Material.desh",
+      "en": "Desh",
+      "zh": "戴斯"
+    },
+    {
+      "key": "Material.deuterium",
+      "en": "Deuterium",
+      "zh": "氘"
+    },
+    {
+      "key": "Material.diamond",
+      "en": "Diamond",
+      "zh": "钻石"
+    },
+    {
+      "key": "Material.diatomite",
+      "en": "Diatomite",
+      "zh": "硅藻土"
+    },
+    {
+      "key": "Material.dilithium",
+      "en": "Dilithium",
+      "zh": "双锂"
+    },
+    {
+      "key": "Material.djurleite",
+      "en": "Djurleite",
+      "zh": "久辉铜"
+    },
+    {
+      "key": "Material.dolomite",
+      "en": "Dolomite",
+      "zh": "白云石"
+    },
+    {
+      "key": "Material.draconium",
+      "en": "Draconium",
+      "zh": "龙"
+    },
+    {
+      "key": "Material.draconiumawakened",
+      "en": "Awakened Draconium",
+      "zh": "觉醒龙"
+    },
+    {
+      "key": "Material.electrotine",
+      "en": "Electrotine",
+      "zh": "蓝石"
+    },
+    {
+      "key": "Material.emerald",
+      "en": "Emerald",
+      "zh": "绿宝石"
+    },
+    {
+      "key": "Material.enrichednaquadah",
+      "en": "Enriched Naquadah",
+      "zh": "富集硅岩"
+    },
+    {
+      "key": "Material.ethane",
+      "en": "Ethane",
+      "zh": "乙烷"
+    },
+    {
+      "key": "Material.ethylene",
+      "en": "Ethylene",
+      "zh": "乙烯"
+    },
+    {
+      "key": "Material.fayalite",
+      "en": "Fayalite",
+      "zh": "铁橄榄石"
+    },
+    {
+      "key": "Material.ferberite",
+      "en": "Ferberite",
+      "zh": "钨铁"
+    },
+    {
+      "key": "Material.fluor-buergerite",
+      "en": "Fluor-Buergerite",
+      "zh": "氟铁电气石"
+    },
+    {
+      "key": "Material.fluorine",
+      "en": "Fluorine",
+      "zh": "氟"
+    },
+    {
+      "key": "Material.fluorspar",
+      "en": "Fluorspar",
+      "zh": "氟石"
+    },
+    {
+      "key": "Material.forsterite",
+      "en": "Forsterite",
+      "zh": "镁橄榄石"
+    },
+    {
+      "key": "Material.fullersearth",
+      "en": "Fullers Earth",
+      "zh": "漂白土"
+    },
+    {
+      "key": "Material.galena",
+      "en": "Galena",
+      "zh": "方铅矿"
+    },
+    {
+      "key": "Material.gallium",
+      "en": "Gallium",
+      "zh": "镓"
+    },
+    {
+      "key": "Material.garnetred",
+      "en": "Red Garnet",
+      "zh": "红石榴石"
+    },
+    {
+      "key": "Material.garnetsand",
+      "en": "Garnet Sand",
+      "zh": "石榴石矿砂"
+    },
+    {
+      "key": "Material.garnetyellow",
+      "en": "Yellow Garnet",
+      "zh": "黄石榴石"
+    },
+    {
+      "key": "Material.garnierite",
+      "en": "Garnierite",
+      "zh": "硅镁镍矿"
+    },
+    {
+      "key": "Material.glauconite",
+      "en": "Glauconite",
+      "zh": "海绿石"
+    },
+    {
+      "key": "Material.glauconitesand",
+      "en": "Glauconite Sand",
+      "zh": "海绿石矿砂"
+    },
+    {
+      "key": "Material.gold",
+      "en": "Gold",
+      "zh": "金"
+    },
+    {
+      "key": "Material.graniticmineralsand",
+      "en": "Granitic Mineral Sand",
+      "zh": "花岗岩矿砂"
+    },
+    {
+      "key": "Material.graphite",
+      "en": "Graphite",
+      "zh": "石墨"
+    },
+    {
+      "key": "Material.greenfuchsite",
+      "en": "Green Fuchsite",
+      "zh": "绿铬云母"
+    },
+    {
+      "key": "Material.greensapphire",
+      "en": "Green Sapphire",
+      "zh": "绿色蓝宝石"
+    },
+    {
+      "key": "Material.grossular",
+      "en": "Grossular",
+      "zh": "钙铝榴石"
+    },
+    {
+      "key": "Material.gypsum",
+      "en": "Gypsum",
+      "zh": "石膏"
+    },
+    {
+      "key": "Material.hedenbergite",
+      "en": "Hedenbergite",
+      "zh": "钙铁辉石"
+    },
+    {
+      "key": "Material.helium_3",
+      "en": "Helium-3",
+      "zh": "氦-3"
+    },
+    {
+      "key": "Material.huebnerite",
+      "en": "Huebnerite",
+      "zh": "钨酸锰"
+    },
+    {
+      "key": "Material.hydricsulfide",
+      "en": "Hydrogen Sulfide",
+      "zh": "硫化氢"
+    },
+    {
+      "key": "Material.hydrofluoricacid_gt5u",
+      "en": "Hydrofluoric Acid",
+      "zh": "氢氟酸"
+    },
+    {
+      "key": "Material.hydrogen",
+      "en": "Hydrogen",
+      "zh": "氢"
+    },
+    {
+      "key": "Material.ilmenite",
+      "en": "Ilmenite",
+      "zh": "钛铁矿"
+    },
+    {
+      "key": "Material.infinitycatalyst",
+      "en": "Infinity Catalyst",
+      "zh": "无尽催化剂"
+    },
+    {
+      "key": "Material.infusedair",
+      "en": "Aer",
+      "zh": "风之魔晶"
+    },
+    {
+      "key": "Material.infusedearth",
+      "en": "Terra",
+      "zh": "地之魔晶"
+    },
+    {
+      "key": "Material.infusedentropy",
+      "en": "Perditio",
+      "zh": "混沌魔晶"
+    },
+    {
+      "key": "Material.infusedfire",
+      "en": "Ignis",
+      "zh": "火之魔晶"
+    },
+    {
+      "key": "Material.infusedgold",
+      "en": "Infused Gold",
+      "zh": "注魔金"
+    },
+    {
+      "key": "Material.infusedorder",
+      "en": "Ordo",
+      "zh": "秩序魔晶"
+    },
+    {
+      "key": "Material.infusedwater",
+      "en": "Aqua",
+      "zh": "水之魔晶"
+    },
+    {
+      "key": "Material.iridium",
+      "en": "Iridium",
+      "zh": "铱"
+    },
+    {
+      "key": "Material.iron",
+      "en": "Iron",
+      "zh": "铁"
+    },
+    {
+      "key": "Material.jade",
+      "en": "Jade",
+      "zh": "玉"
+    },
+    {
+      "key": "Material.jasper",
+      "en": "Jasper",
+      "zh": "碧玉"
+    },
+    {
+      "key": "Material.kaolinite",
+      "en": "Kaolinite",
+      "zh": "高岭石"
+    },
+    {
+      "key": "Material.kyanite",
+      "en": "Kyanite",
+      "zh": "蓝晶石"
+    },
+    {
+      "key": "Material.lanthanum",
+      "en": "Lanthanum",
+      "zh": "镧"
+    },
+    {
+      "key": "Material.lapis",
+      "en": "Lapis",
+      "zh": "青金石"
+    },
+    {
+      "key": "Material.lava",
+      "en": "Lava",
+      "zh": "岩浆"
+    },
+    {
+      "key": "Material.lazurite",
+      "en": "Lazurite",
+      "zh": "蓝金石"
+    },
+    {
+      "key": "Material.lead",
+      "en": "Lead",
+      "zh": "铅"
+    },
+    {
+      "key": "Material.ledox",
+      "en": "Ledox",
+      "zh": "深铅"
+    },
+    {
+      "key": "Material.lepidolite",
+      "en": "Lepidolite",
+      "zh": "锂云母"
+    },
+    {
+      "key": "Material.lignite",
+      "en": "Lignite Coal",
+      "zh": "褐煤"
+    },
+    {
+      "key": "Material.liquidair",
+      "en": "Liquid Air",
+      "zh": "液态空气"
+    },
+    {
+      "key": "Material.lithium",
+      "en": "Lithium",
+      "zh": "锂"
+    },
+    {
+      "key": "Material.loellingite",
+      "en": "Loellingite",
+      "zh": "斜方砷铁"
+    },
+    {
+      "key": "Material.magnesite",
+      "en": "Magnesite",
+      "zh": "菱镁矿"
+    },
+    {
+      "key": "Material.magnetite",
+      "en": "Magnetite",
+      "zh": "磁铁矿"
+    },
+    {
+      "key": "Material.malachite",
+      "en": "Malachite",
+      "zh": "孔雀石"
+    },
+    {
+      "key": "Material.manganese",
+      "en": "Manganese",
+      "zh": "锰"
+    },
+    {
+      "key": "Material.meteoriciron",
+      "en": "Meteoric Iron",
+      "zh": "陨铁"
+    },
+    {
+      "key": "Material.methane",
+      "en": "Methane",
+      "zh": "甲烷"
+    },
+    {
+      "key": "Material.mica",
+      "en": "Mica",
+      "zh": "云母"
+    },
+    {
+      "key": "Material.mirabilite",
+      "en": "Mirabilite",
+      "zh": "芒硝"
+    },
+    {
+      "key": "Material.mithril",
+      "en": "Mithril",
+      "zh": "秘银"
+    },
+    {
+      "key": "Material.molybdenite",
+      "en": "Molybdenite",
+      "zh": "辉钼矿"
+    },
+    {
+      "key": "Material.molybdenum",
+      "en": "Molybdenum",
+      "zh": "钼"
+    },
+    {
+      "key": "Material.monazite",
+      "en": "Monazite",
+      "zh": "独居石"
+    },
+    {
+      "key": "Material.mysteriouscrystal",
+      "en": "Mysterious Crystal",
+      "zh": "神秘水晶"
+    },
+    {
+      "key": "Material.mytryl",
+      "en": "Mytryl",
+      "zh": "深空秘银"
+    },
+    {
+      "key": "Material.naquadah",
+      "en": "Naquadah",
+      "zh": "硅岩"
+    },
+    {
+      "key": "Material.naquadahenriched",
+      "en": "Enriched Naquadah",
+      "zh": "富集硅岩"
+    },
+    {
+      "key": "Material.naquadria",
+      "en": "Naquadria",
+      "zh": "超能硅岩"
+    },
+    {
+      "key": "Material.natruralgas",
+      "en": "Natural Gas",
+      "zh": "天然气"
+    },
+    {
+      "key": "Material.neodymium",
+      "en": "Neodymium",
+      "zh": "钕"
+    },
+    {
+      "key": "Material.netherquartz",
+      "en": "Nether Quartz",
+      "zh": "下界石英"
+    },
+    {
+      "key": "Material.netherstar",
+      "en": "Nether Star",
+      "zh": "下界之星"
+    },
+    {
+      "key": "Material.neutronium",
+      "en": "Neutronium",
+      "zh": "中子"
+    },
+    {
+      "key": "Material.nickel",
+      "en": "Nickel",
+      "zh": "镍"
+    },
+    {
+      "key": "Material.niobium",
+      "en": "Niobium",
+      "zh": "铌"
+    },
+    {
+      "key": "Material.nitrogen",
+      "en": "Nitrogen",
+      "zh": "氮"
+    },
+    {
+      "key": "Material.oilextraheavy",
+      "en": "Very Heavy Oil",
+      "zh": "极重油"
+    },
+    {
+      "key": "Material.oilheavy",
+      "en": "Heavy Oil",
+      "zh": "重油"
+    },
+    {
+      "key": "Material.oillight",
+      "en": "Light Oil",
+      "zh": "轻油"
+    },
+    {
+      "key": "Material.oilmedium",
+      "en": "Raw Oil",
+      "zh": "原油"
+    },
+    {
+      "key": "Material.oilsands",
+      "en": "Oilsands",
+      "zh": "油砂"
+    },
+    {
+      "key": "Material.olenite",
+      "en": "Olenite",
+      "zh": "铝电气石"
+    },
+    {
+      "key": "Material.olivine",
+      "en": "Olivine",
+      "zh": "橄榄石"
+    },
+    {
+      "key": "Material.opal",
+      "en": "Opal",
+      "zh": "蛋白石"
+    },
+    {
+      "key": "Material.orangedescloizite",
+      "en": "Orange Descloizite",
+      "zh": "橙钒铅铜"
+    },
+    {
+      "key": "Material.orichalcum",
+      "en": "Orichalcum",
+      "zh": "山铜"
+    },
+    {
+      "key": "Material.oriharukon",
+      "en": "Oriharukon",
+      "zh": "奥利哈钢"
+    },
+    {
+      "key": "Material.osmium",
+      "en": "Osmium",
+      "zh": "锇"
+    },
+    {
+      "key": "Material.oxygen",
+      "en": "Oxygen",
+      "zh": "氧"
+    },
+    {
+      "key": "Material.palladium",
+      "en": "Palladium",
+      "zh": "钯"
+    },
+    {
+      "key": "Material.pentlandite",
+      "en": "Pentlandite",
+      "zh": "镍黄铁矿"
+    },
+    {
+      "key": "Material.perlite",
+      "en": "Perlite",
+      "zh": "珍珠岩"
+    },
+    {
+      "key": "Material.petroleum",
+      "en": "Petroleum",
+      "zh": "石油"
+    },
+    {
+      "key": "Material.pitchblende",
+      "en": "Pitchblende",
+      "zh": "沥青铀矿"
+    },
+    {
+      "key": "Material.platinum",
+      "en": "Platinum",
+      "zh": "铂"
+    },
+    {
+      "key": "Material.plutonium",
+      "en": "Plutonium 239",
+      "zh": "钚-239"
+    },
+    {
+      "key": "Material.plutonium241",
+      "en": "Plutonium 241",
+      "zh": "钚-241"
+    },
+    {
+      "key": "Material.pollucite",
+      "en": "Pollucite",
+      "zh": "铯榴石"
+    },
+    {
+      "key": "Material.powellite",
+      "en": "Powellite",
+      "zh": "钼钙矿"
+    },
+    {
+      "key": "Material.prasiolite",
+      "en": "Prasiolite",
+      "zh": "堇云石"
+    },
+    {
+      "key": "Material.pyrite",
+      "en": "Pyrite",
+      "zh": "黄铁矿"
+    },
+    {
+      "key": "Material.pyrochlore",
+      "en": "Pyrochlore",
+      "zh": "烧绿石"
+    },
+    {
+      "key": "Material.pyrolusite",
+      "en": "Pyrolusite",
+      "zh": "软锰矿"
+    },
+    {
+      "key": "Material.pyrope",
+      "en": "Pyrope",
+      "zh": "镁铝榴石"
+    },
+    {
+      "key": "Material.quantium",
+      "en": "Quantium",
+      "zh": "量子"
+    },
+    {
+      "key": "Material.quartz",
+      "en": "Quartz",
+      "zh": "石英"
+    },
+    {
+      "key": "Material.quartzite",
+      "en": "Quartzite",
+      "zh": "石英岩"
+    },
+    {
+      "key": "Material.quartzsand",
+      "en": "Quartz Sand",
+      "zh": "石英矿砂"
+    },
+    {
+      "key": "Material.rareearth",
+      "en": "Rare Earth",
+      "zh": "稀土"
+    },
+    {
+      "key": "Material.rawsilicon",
+      "en": "生硅",
+      "zh": "生硅"
+    },
+    {
+      "key": "Material.realgar",
+      "en": "Realgar",
+      "zh": "雄黄"
+    },
+    {
+      "key": "Material.reddescloizite",
+      "en": "Red Descloizite",
+      "zh": "红钒铅锌"
+    },
+    {
+      "key": "Material.redfuchsite",
+      "en": "Red Fuchsite",
+      "zh": "红铬云母"
+    },
+    {
+      "key": "Material.redstone",
+      "en": "Redstone",
+      "zh": "红石"
+    },
+    {
+      "key": "Material.redzircon",
+      "en": "Red Zircon",
+      "zh": "红锆石"
+    },
+    {
+      "key": "Material.rocksalt",
+      "en": "Rock Salt",
+      "zh": "岩盐"
+    },
+    {
+      "key": "Material.roquesite",
+      "en": "Roquesite",
+      "zh": "硫铟铜"
+    },
+    {
+      "key": "Material.rubracium",
+      "en": "Rubracium",
+      "zh": "褐铜"
+    },
+    {
+      "key": "Material.ruby",
+      "en": "Ruby",
+      "zh": "红宝石"
+    },
+    {
+      "key": "Material.rutile",
+      "en": "Rutile",
+      "zh": "金红石"
+    },
+    {
+      "key": "Material.salt",
+      "en": "Salt",
+      "zh": "盐"
+    },
+    {
+      "key": "Material.saltpeter",
+      "en": "Saltpeter",
+      "zh": "硝石"
+    },
+    {
+      "key": "Material.saltwater",
+      "en": "Salt Water",
+      "zh": "盐水"
+    },
+    {
+      "key": "Material.samarium",
+      "en": "Samarium",
+      "zh": "钐"
+    },
+    {
+      "key": "Material.sapphire",
+      "en": "Sapphire",
+      "zh": "蓝宝石"
+    },
+    {
+      "key": "Material.scheelite",
+      "en": "Scheelite",
+      "zh": "白钨矿"
+    },
+    {
+      "key": "Material.shadowiron",
+      "en": "Shadow Iron",
+      "zh": "暗影铁"
+    },
+    {
+      "key": "Material.silver",
+      "en": "Silver",
+      "zh": "银"
+    },
+    {
+      "key": "Material.soapstone",
+      "en": "Soapstone",
+      "zh": "皂石"
+    },
+    {
+      "key": "Material.sodalite",
+      "en": "Sodalite",
+      "zh": "方钠石"
+    },
+    {
+      "key": "Material.spessartine",
+      "en": "Spessartine",
+      "zh": "锰铝榴石"
+    },
+    {
+      "key": "Material.sphalerite",
+      "en": "Sphalerite",
+      "zh": "闪锌矿"
+    },
+    {
+      "key": "Material.spodumene",
+      "en": "Spodumene",
+      "zh": "锂辉石"
+    },
+    {
+      "key": "Material.stibnite",
+      "en": "Stibnite",
+      "zh": "辉锑矿"
+    },
+    {
+      "key": "Material.sulfur",
+      "en": "Sulfur",
+      "zh": "硫"
+    },
+    {
+      "key": "Material.sulfurdioxide",
+      "en": "Sulfur Dioxide",
+      "zh": "二氧化硫"
+    },
+    {
+      "key": "Material.sulfuricacid",
+      "en": "Sulfuric Acid",
+      "zh": "硫酸"
+    },
+    {
+      "key": "Material.talc",
+      "en": "Talc",
+      "zh": "滑石"
+    },
+    {
+      "key": "Material.tantalite",
+      "en": "Tantalite",
+      "zh": "钽铁矿"
+    },
+    {
+      "key": "Material.tanzanite",
+      "en": "Tanzanite",
+      "zh": "坦桑石"
+    },
+    {
+      "key": "Material.tartarite",
+      "en": "Tartarite",
+      "zh": "熔火之石"
+    },
+    {
+      "key": "Material.tengamraw",
+      "en": "Raw Tengam",
+      "zh": "生镃"
+    },
+    {
+      "key": "Material.tetrahedrite",
+      "en": "Tetrahedrite",
+      "zh": "黝铜矿"
+    },
+    {
+      "key": "Material.thorianite",
+      "en": "Thorianite",
+      "zh": "方钍石"
+    },
+    {
+      "key": "Material.thorium",
+      "en": "Thorium",
+      "zh": "钍"
+    },
+    {
+      "key": "Material.tiberium",
+      "en": "Tiberium",
+      "zh": "泰伯利亚"
+    },
+    {
+      "key": "Material.tin",
+      "en": "Tin",
+      "zh": "锡"
+    },
+    {
+      "key": "Material.titanium",
+      "en": "Titanium",
+      "zh": "钛"
+    },
+    {
+      "key": "Material.topaz",
+      "en": "Topaz",
+      "zh": "黄玉"
+    },
+    {
+      "key": "Material.tricalciumphosphate",
+      "en": "Tricalcium Phosphate",
+      "zh": "磷酸三钙"
+    },
+    {
+      "key": "Material.trinium",
+      "en": "Trinium",
+      "zh": "三元金属"
+    },
+    {
+      "key": "Material.trona",
+      "en": "Trona",
+      "zh": "天然碱"
+    },
+    {
+      "key": "Material.tungstate",
+      "en": "Tungstate",
+      "zh": "钨酸锂"
+    },
+    {
+      "key": "Material.tungsten",
+      "en": "Tungsten",
+      "zh": "钨"
+    },
+    {
+      "key": "Material.uraninite",
+      "en": "Uraninite",
+      "zh": "晶质铀矿"
+    },
+    {
+      "key": "Material.uranium235",
+      "en": "Uranium 235",
+      "zh": "铀-235"
+    },
+    {
+      "key": "Material.uranium238",
+      "en": "Uranium 238",
+      "zh": "铀-238"
+    },
+    {
+      "key": "Material.uvarovite",
+      "en": "Uvarovite",
+      "zh": "钙铬榴石"
+    },
+    {
+      "key": "Material.vanadio-oxy-dravite",
+      "en": "Vanadio-Oxy-Dravite",
+      "zh": "钒镁电气石"
+    },
+    {
+      "key": "Material.vanadium",
+      "en": "Vanadium",
+      "zh": "钒"
+    },
+    {
+      "key": "Material.vanadiummagnetite",
+      "en": "Vanadium Magnetite",
+      "zh": "钒磁铁矿"
+    },
+    {
+      "key": "Material.vermiculite",
+      "en": "Vermiculite",
+      "zh": "蛭石"
+    },
+    {
+      "key": "Material.vinteum",
+      "en": "Vinteum",
+      "zh": "温特姆"
+    },
+    {
+      "key": "Material.vulcanite",
+      "en": "Vulcanite",
+      "zh": "胶木"
+    },
+    {
+      "key": "Material.vyroxeres",
+      "en": "Vyroxeres",
+      "zh": "幽冥剧毒结晶"
+    },
+    {
+      "key": "Material.wittichenite",
+      "en": "Wittichenite",
+      "zh": "硫铋铜"
+    },
+    {
+      "key": "Material.wollastonite",
+      "en": "Wollastonite",
+      "zh": "硅灰石"
+    },
+    {
+      "key": "Material.wulfenite",
+      "en": "Wulfenite",
+      "zh": "钼铅矿"
+    },
+    {
+      "key": "Material.yellowlimonite",
+      "en": "Yellow Limonite",
+      "zh": "黄褐铁矿"
+    },
+    {
+      "key": "Material.yttrium",
+      "en": "Yttrium",
+      "zh": "钇"
+    },
+    {
+      "key": "Material.zeolite",
+      "en": "Zeolite",
+      "zh": "沸石"
+    }
+  ],
+  "unmatchedExistingNames": [
+    "不明液体",
+    "冰晶石（F）",
+    "榍石",
+    "氟石（F）",
+    "氟碳铈矿",
+    "溴硫铋矿（Br）",
+    "溴硫银汞",
+    "熔融铁",
+    "熔融铅",
+    "熔融铜",
+    "熔融锡",
+    "硅钍钇矿",
+    "硅铍钇矿（Ce）",
+    "硅铍钇矿（Y）",
+    "硫砷铱",
+    "硫碲金锗矿",
+    "硫铑铱矿",
+    "碘钙石",
+    "碲化金铊",
+    "磷钇矿",
+    "磷铝铈矿",
+    "莱普生石",
+    "蒸馏水",
+    "虚恩",
+    "赤铅矿",
+    "重晶石（Ra）",
+    "钇砷铜矿（Cd）",
+    "钇砷铜矿（La）",
+    "钇砷铜矿（Nd）",
+    "钇砷铜矿（Y）",
+    "钛铌铅钠石",
+    "钛锆酸钙",
+    "钛锆钍矿",
+    "钯碲硒矿",
+    "铈硅石",
+    "铈钇矿",
+    "铊盐",
+    "铌钇矿（Yb）",
+    "铌钇矿（Y）",
+    "锆石",
+    "锗铀钇矿",
+    "镁钛矿",
+    "镍铬矿",
+    "镧石（Ce）",
+    "镧石（La）",
+    "黑铝钙石"
+  ]
+}

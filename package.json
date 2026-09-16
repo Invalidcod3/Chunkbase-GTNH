@@ -1,13 +1,19 @@
 {
-  "name": "amidst-gtnh-web",
+  "name": "chunkbase-gtnh",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "license": "GPL-3.0-only",
+  "description": "Browser-based GTNH biome, structure and resource map",
+  "author": "InvalidCode",
+  "repository": {"type":"git","url":"https://github.com/Invalidcod3/Chunkbase-GTNH.git"},
+  "engines": {"node": ">=22"},
   "scripts": {
     "dev": "node tools/serve.mjs",
     "check": "node tools/check.mjs",
     "test": "node --test tests/*.test.mjs",
-    "build": "node tools/build.mjs"
+    "build": "node tools/build.mjs",
+    "build:release": "node tools/build-release.mjs",
+    "verify:release": "node tools/verify-release.mjs"
   }
 }

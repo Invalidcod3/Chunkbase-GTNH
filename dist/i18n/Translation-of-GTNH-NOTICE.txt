@@ -1,0 +1,6 @@
+Translations by Kiwi233 and Translation-of-GTNH contributors.
+Source: https://github.com/Kiwi233/Translation-of-GTNH
+Revision: d2635d9e7137f7886ad29f9d20c8b445cefa9e09
+Upstream README states: 汉化部分采用 CC-BY-NC-SA 协议
+The repository also includes an MIT LICENSE, reproduced alongside this notice.
+This subset extracts material names and pairs them with English names for the web UI.

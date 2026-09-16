@@ -6,3 +6,9 @@ private-packs/
 __pycache__/
 *.pyc
 .DS_Store
+node_modules/
+.wrangler/
+.env
+.env.*
+!.env.example
+runtime/

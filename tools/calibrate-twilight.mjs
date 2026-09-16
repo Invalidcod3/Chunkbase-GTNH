@@ -20,7 +20,7 @@ for(const {query:q,response} of reference.cases) {
   }
 }
 assert.ok(report.features>0);
-for(const file of ['dist/engine/twilight-provider.js','private-packs/twilight-browser/selection.js','private-packs/twilight-browser/profile.json','private-packs/runtime-session/twilight-reference.json'])
+for(const file of ['dist/engine/twilight-provider.js','dist/engine/biome-raster-cache.js','private-packs/twilight-browser/selection.js','private-packs/twilight-browser/profile.json','private-packs/runtime-session/twilight-reference.json'])
   report.hashes[file]=createHash('sha256').update(await readFile(new URL(file,root))).digest('hex');
 await writeFile(new URL('private-packs/runtime-session/twilight-validation.json',root),JSON.stringify(report,null,2));
 console.log(JSON.stringify({...report,hashes:undefined}));

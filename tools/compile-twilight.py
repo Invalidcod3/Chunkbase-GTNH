@@ -38,6 +38,7 @@ def build():
     run(maven+['org.teavm:teavm-maven-plugin:0.15.0:compile'],cwd=work)
     output=ROOT/'private-packs/twilight-browser';output.mkdir(parents=True,exist_ok=True)
     shutil.copyfile(work/'target/browser/twilight.js',output/'selection.js')
+    run(['node',ROOT/'tools/optimize-generated.mjs',output/'selection.js'])
     shutil.copyfile(source/'terrain-profile.json',output/'profile.json')
     print('Private Twilight function library compiled; live calibration required.')
 if __name__=='__main__':build()

@@ -1,17 +1,31 @@
-import { biomeByIndex, markerTypeKey } from "./engine/catalog.js";
+import { biomeByIndex, biomeRegistry, markerTypeKey } from "./engine/catalog.js";
 import { resourceMatches } from "./engine/resources.js";
 import { drawResources, hitResource } from "./resource-view.js";
+import { clipBiomeQuery } from "./engine/biome-query.js";
+import { drawCoordinateGrid } from "./map-grid.js";
+import { GpuBiomeRenderer, gpuPalette } from './gpu-biome-renderer.js';
+import {trimMapTiles,releaseTileImage} from './map-memory.js';
+import {nextAllocatedWork} from './compute-allocation.js';
+import {canvasSize,deviceHints} from './device-budget.js';
+import {BiomeSelection,biomeRgb} from './biome-selection.js';
 export class MapView {
-  constructor(canvas, { request, onMove, onSelect, onViewport, onError }) {
+  constructor(canvas, { request, previewPolicy, onMove, onSelect, onViewport, onViewportChange, onError, onMapProgress, onGpuStatus }) {
     Object.assign(this, {
       canvas,
       request,
+      previewPolicy,
       onMove,
       onSelect,
       onViewport,
+      onViewportChange,
       onError,
+      onMapProgress,
+      onGpuStatus,
     });
     this.ctx = canvas.getContext("2d");
+    this.paletteRevision=0;
+    this.biomeSelection=new BiomeSelection();
+    this.gpuMode='off';
     this.x = 1900;
     this.z = 0;
     this.level = 0;
@@ -19,6 +33,7 @@ export class MapView {
     this.targetScale = 0.25;
     this.tiles = new Map();
     this.pending = new Set();
+    this.tileControllers = new Map();
     this.failedTiles = new Map();
     this.markers = [];
     this.resources = [];
@@ -31,6 +46,7 @@ export class MapView {
     this.seed = "0";
     this.dimension = "end";
     this.showBiomes = true;
+    this.progressive = true;
     this.showStructures = true;
     this.grid = false;
     this.inertia = true;
@@ -51,6 +67,7 @@ export class MapView {
       { passive: false },
     );
     canvas.addEventListener("pointerdown", (e) => {
+      if(this.suspended||this.pointers.size>=2)return;
       canvas.focus();
       canvas.setPointerCapture(e.pointerId);
       this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -62,7 +79,9 @@ export class MapView {
         moved: false,
       };
       this.velocity = { x: 0, z: 0 };
-      if (this.pointers.size === 2) this.pinch = this.pinchState();
+      if (this.pointers.size === 2) {
+        this.pinch = this.pinchState();this.drag.moved=true;this.zoomAnchor=null;
+      }
     });
     canvas.addEventListener("pointermove", (e) => {
       const rect = canvas.getBoundingClientRect(),
@@ -112,13 +131,21 @@ export class MapView {
       const point = this.world(sx, sy);
       this.onMove(point, this.biomeAt(point.x, point.z));
     });
-    const release = (e) => {
-      const click = this.drag && !this.drag.moved && this.pointers.size === 1;
+    const release = (e,cancelled=false) => {
+      if(!this.pointers.has(e.pointerId))return;
+      const click = !cancelled && this.drag && !this.drag.moved && this.pointers.size === 1;
       this.pointers.delete(e.pointerId);
       this.pinch = null;
+      if(this.pointers.size) {
+        // Continue from the remaining finger, never the released finger's
+        // pre-pinch origin. A multi-touch gesture must not become a tap.
+        const p=this.pointers.values().next().value;
+        this.drag={x:p.x,y:p.y,startX:p.x,startY:p.y,moved:true};
+        this.velocity={x:0,z:0};
+      }
       if (!this.pointers.size) {
         this.drag = null;
-        if (!this.inertia) this.velocity = { x: 0, z: 0 };
+        if (cancelled||!this.inertia) this.velocity = { x: 0, z: 0 };
         if (click) {
           const rect = canvas.getBoundingClientRect(),
             p = this.world(e.clientX - rect.left, e.clientY - rect.top);
@@ -127,12 +154,10 @@ export class MapView {
       }
     };
     canvas.addEventListener("pointerup", release);
-    canvas.addEventListener("pointercancel", (e) => {
-      this.pointers.delete(e.pointerId);
-      this.drag = null;
-      this.pinch = null;
-      this.velocity = { x: 0, z: 0 };
-    });
+    canvas.addEventListener("pointercancel", e=>release(e,true));
+    canvas.addEventListener("lostpointercapture", e=>release(e,true));
+    canvas.addEventListener('contextlost',()=>{this.contextLost=true;});
+    canvas.addEventListener('contextrestored',()=>{this.contextLost=false;this.resize();});
     canvas.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
@@ -168,7 +193,7 @@ export class MapView {
         }
       }
     });
-    requestAnimationFrame((t) => this.frame(t));
+    this.frameId=requestAnimationFrame((t) => this.frame(t));
   }
   pinchState() {
     const [a, b] = this.pointers.values();
@@ -182,11 +207,31 @@ export class MapView {
     const rect = this.canvas.getBoundingClientRect();
     this.width = rect.width;
     this.height = rect.height;
-    const dpr = devicePixelRatio || 1;
-    this.canvas.width = Math.round(rect.width * dpr);
-    this.canvas.height = Math.round(rect.height * dpr);
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if(!this.suspended) {
+      const size=canvasSize(rect.width,rect.height,globalThis.devicePixelRatio,deviceHints());
+      if(this.canvas.width!==size.width)this.canvas.width=size.width;
+      if(this.canvas.height!==size.height)this.canvas.height=size.height;
+      this.ctx.setTransform(size.scaleX,0,0,size.scaleY,0,0);
+    }
     this.changed();
+  }
+  setSuspended(suspended) {
+    if(!!this.suspended===!!suspended)return;
+    this.suspended=!!suspended;
+    this.velocity={x:0,z:0};this.drag=null;this.pinch=null;this.zoomAnchor=null;
+    this.pointers.clear();this.lastFrame=0;
+    if(this.suspended) {
+      cancelAnimationFrame(this.frameId);clearTimeout(this.viewTimer);this.cancelTiles();
+      // Keep exact samples and warm CPU engine caches, release display storage.
+      for(const tile of this.tiles.values())this.releaseTile(tile);
+      this.resumeGpu=!!this.gpuRenderer?.active;
+      if(this.resumeGpu)this.gpuRenderer.setMode('off');
+      this.canvas.width=this.canvas.height=1;
+    } else {
+      this.resize();
+      if(this.resumeGpu&&this.gpuMode!=='off')this.setGpuMode(this.gpuMode);
+      this.frameId=requestAnimationFrame(t=>this.frame(t));
+    }
   }
   world(x, y) {
     return {
@@ -224,11 +269,13 @@ export class MapView {
     this.velocity = { x: 0, z: 0 };
     this.changed();
   }
-  setWorld(seed, dimension) {
+  setWorld(seed, dimension, {preserveBiomes = false} = {}) {
+    const retain = preserveBiomes && seed === this.seed && dimension === this.dimension;
     this.seed = seed;
     this.dimension = dimension;
     this.generation++;
-    this.tiles.clear();
+    this.cancelTiles();
+    if (!retain) {for(const tile of this.tiles.values())this.releaseTile(tile);this.tiles.clear();}
     this.pending.clear();
     this.failedTiles.clear();
     this.markers = [];
@@ -240,22 +287,69 @@ export class MapView {
     this.x = Math.max(-29999000, Math.min(29999000, this.x));
     this.z = Math.max(-29999000, Math.min(29999000, this.z));
     this.dirty = true;
+    this.onViewportChange?.();
     clearTimeout(this.viewTimer);
-    this.viewTimer = setTimeout(() => this.onViewport(this.bounds()), 140);
+    if(!this.suspended)this.viewTimer = setTimeout(() => this.onViewport(this.bounds()), 140);
   }
   step() {
     return 2 ** Math.max(0, Math.min(8, Math.floor(Math.log2(1 / this.scale))));
   }
   biomeAt(x, z) {
-    const step = this.step(),
-      size = 128 * step,
-      tx = Math.floor(x / size),
-      tz = Math.floor(z / size),
-      t = this.tiles.get(`${step}:${tx}:${tz}`);
-    return t?.data?.[
-      Math.floor((z - tz * size) / step) * 128 +
-        Math.floor((x - tx * size) / step)
-    ];
+    // Match the topmost visible sample, including retained tiles while zooming.
+    for (const t of this.biomeTiles().reverse()) {
+      if (!t.data) continue;
+      const size=128*t.step;
+      const q=t.query || {x:t.tx*size,z:t.tz*size,width:128,height:128};
+      const sampleStep=q.step || t.step;
+      const col=Math.floor((x-q.x)/sampleStep),row=Math.floor((z-q.z)/sampleStep);
+      if(col>=0 && row>=0 && col<q.width && row<q.height)return t.data[row*q.width+col];
+    }
+    return undefined;
+  }
+  biomeTiles() {
+    const current=this.step();
+    // Completed target tiles win. Until then, coarse previews cannot cover
+    // finer cached samples from another zoom level, even when they arrive later.
+    return [...this.tiles.values()].filter(t=>t.image||t.data).sort((a,b)=>
+      Number(a.step===current && !a.preview)-Number(b.step===current && !b.preview)
+      || (b.query?.step || b.step)-(a.query?.step || a.step)
+      || Number(a.step===current)-Number(b.step===current));
+  }
+  drawBiomes(c) {
+    const tiles=this.biomeTiles();
+    if(this.gpuRenderer?.active){
+      try{
+        if(this.gpuPaletteRevision!==(this.paletteRevision||0)){
+          this.gpuRenderer.setPalette(gpuPalette(biomeRegistry.indices,this.biomeSelection));this.gpuPaletteRevision=this.paletteRevision||0;
+        }
+        const surface=this.gpuRenderer.render(tiles,this);
+        if(surface){c.drawImage(surface,0,0,this.width,this.height);return;}
+      }catch{this.gpuRenderer.release();this.gpuRenderer.status('failed');}
+    }
+    for(const t of tiles) {
+      const p=this.screen(t.tx*128*t.step,t.tz*128*t.step),s=128*t.step*this.scale;
+      if(p.x>=this.width || p.y>=this.height || p.x+s<=0 || p.y+s<=0)continue;
+      c.drawImage(this.prepareTileImage(t),p.x,p.y,s,s);
+    }
+  }
+  setGpuMode(mode){
+    if(this.suspended)this.resumeGpu=mode!=='off';
+    this.gpuRenderer||=new GpuBiomeRenderer({onStatus:status=>{
+      this.gpuState=status;this.gpuPaletteRevision=-1;this.dirty=true;this.onGpuStatus?.(status);
+    }});
+    this.gpuRenderer.setMode(this.suspended?'off':mode);this.gpuMode=mode;this.dirty=true;
+  }
+  prepareTileImage(tile){
+    if(!tile.data||!tile.query)return tile.image;
+    if(!tile.image){tile.image=document.createElement('canvas');tile.image.width=tile.image.height=128*tile.step/tile.query.step;tile.imageVersion=undefined;}
+    if(tile.imageVersion===(this.paletteRevision||0))return tile.image;
+    const q=tile.query,c=tile.image.getContext('2d'),pixels=c.createImageData(q.width,q.height);
+    for(let i=0;i<tile.data.length;i++){
+      const rgb=biomeRgb(biomeByIndex(tile.data[i]),this.biomeSelection);
+      pixels.data[i*4]=rgb>>16;pixels.data[i*4+1]=(rgb>>8)&255;pixels.data[i*4+2]=rgb&255;pixels.data[i*4+3]=255;
+    }
+    c.putImageData(pixels,(q.x-tile.tx*128*tile.step)/q.step,(q.z-tile.tz*128*tile.step)/q.step);
+    tile.imageVersion=this.paletteRevision||0;return tile.image;
   }
   isFullyLoaded() {
     if (!this.showBiomes) return true;
@@ -272,18 +366,41 @@ export class MapView {
         x <= Math.floor((bounds.maxX - 1) / size);
         x++
       ) {
-        if (!this.tiles.has(`${step}:${x}:${z}`)) return false;
+        const tile=this.tiles.get(`${step}:${x}:${z}`);
+        if (!tile || tile.preview) return false;
       }
     }
     return true;
   }
+  retryFailedTiles() {
+    this.failedTiles.clear();this.dirty=true;
+  }
+  recolorTiles(){
+    this.paletteRevision=(this.paletteRevision||0)+1;
+    this.dirty=true;
+  }
+  releaseTile(tile){this.gpuRenderer?.deleteTexture?.(tile);releaseTileImage(tile);}
+  trimTiles(visible,bounds){
+    this.memoryStats=trimMapTiles(this.tiles,{visible,bounds,gpu:!!this.gpuRenderer?.active,
+      ...deviceHints(),release:tile=>this.releaseTile(tile)});
+  }
   ensureTiles() {
-    if (!this.showBiomes || !this.width) return;
+    if(this.suspended)return;
+    if (!this.showBiomes || !this.width) {this.cancelTiles();this.onMapProgress?.({remaining:0,previews:0});return;}
     const step = this.step(),
       size = 128 * step,
       b = this.bounds(),
       generation = this.generation;
     const todo = [];
+    const visible=new Set();
+    for(let z=Math.floor(b.minZ/size);z<=Math.floor((b.maxZ-1)/size);z++)
+      for(let x=Math.floor(b.minX/size);x<=Math.floor((b.maxX-1)/size);x++)visible.add(`${step}:${x}:${z}`);
+    this.cancelTiles(visible);
+    for(const key of this.failedTiles.keys())if(!visible.has(key))this.failedTiles.delete(key);
+    // Touch the working set, so recent viewports are retained when revisited.
+    for(const key of visible){const tile=this.tiles.get(key);if(tile){this.tiles.delete(key);this.tiles.set(key,tile);}}
+    this.trimTiles(visible,b);
+    let remaining=0,previews=0,failed=0;
     for (
       let tz = Math.floor(b.minZ / size);
       tz <= Math.floor((b.maxZ - 1) / size);
@@ -295,70 +412,65 @@ export class MapView {
         tx++
       ) {
         const key = `${step}:${tx}:${tz}`;
+        const tile = this.tiles.get(key);
+        if (!tile || tile.preview) remaining++;
+        if (tile?.preview) previews++;
         const failure = this.failedTiles.get(key);
+        if(failure?.attempts>=3)failed++;
         if (
-          !this.tiles.has(key) &&
+          (!tile || tile.preview) &&
           !this.pending.has(key) &&
           (!failure ||
             (failure.attempts < 3 && Date.now() >= failure.retryAfter))
         )
-          todo.push({ tx, tz, key });
+          todo.push({ tx, tz, key, workClass:tile?.preview?'refine':'coverage',preview:this.progressive && this.previewPolicy?.(this.dimension,step)!==false && !tile && !failure && step<256 });
       }
+    this.onMapProgress?.({remaining,previews,failed});
     todo.sort(
       (a, b) =>
+        Number(b.preview)-Number(a.preview) ||
         Math.hypot(a.tx * size - this.x, a.tz * size - this.z) -
         Math.hypot(b.tx * size - this.x, b.tz * size - this.z),
     );
-    for (const { tx, tz, key } of todo.slice(
-      0,
-      Math.max(0, 4 - this.pending.size),
-    )) {
+    const selected=[],running=[...this.tileControllers.values()];
+    const slots=Math.max(0,(this.tileConcurrency??4)-this.pending.size);
+    while(todo.length&&selected.length<slots){
+      const index=nextAllocatedWork(todo,running,this.allocationWorkers??1,this.allocation??0);
+      const [job]=todo.splice(index,1);selected.push(job);running.push(job);
+    }
+    for (const { tx, tz, key, preview, workClass } of selected) {
       this.pending.add(key);
-      this.request("sampleBiomes", {
+      const controller=new AbortController();
+      controller.workClass=workClass;
+      this.tileControllers.set(key,controller);
+      const factor=preview ? Math.min(2,256/step) : 1, sampleSize=128/factor;
+      const clipped = clipBiomeQuery({
         seed: this.seed,
         dimension: this.dimension,
         x: tx * size,
         z: tz * size,
-        width: 128,
-        height: 128,
-        step,
-      })
+        width: sampleSize,
+        height: sampleSize,
+        step:step*factor,
+      });
+      (clipped ? this.request("sampleBiomes", clipped.query, {signal:controller.signal,priority:0,workClass}) : Promise.resolve(null))
         .then((data) => {
-          if (generation !== this.generation) return;
+          if (generation !== this.generation || controller.signal.aborted) return;
           let image = null;
-          if (data) {
+          if (data && !this.gpuRenderer?.active) {
             image = document.createElement("canvas");
-            image.width = image.height = 128;
-            const c = image.getContext("2d"),
-              pixels = c.createImageData(128, 128);
-            for (let i = 0; i < data.length; i++) {
-              const hex = biomeByIndex(data[i])?.color || "#454545",
-                rgb = parseInt(hex.slice(1), 16);
-              pixels.data[i * 4] = rgb >> 16;
-              pixels.data[i * 4 + 1] = (rgb >> 8) & 255;
-              pixels.data[i * 4 + 2] = rgb & 255;
-              pixels.data[i * 4 + 3] = 255;
-            }
-            c.putImageData(pixels, 0, 0);
+            image.width = image.height = sampleSize;
           }
-          this.tiles.set(key, { image, data, tx, tz, step });
+          const tile={image,data,tx,tz,step,query:clipped?.query,preview:!!preview && (data!==null || !clipped)};
+          if(!this.gpuRenderer?.active)this.prepareTileImage(tile);
+          const previous=this.tiles.get(key);if(previous)this.releaseTile(previous);
+          this.tiles.set(key,tile);
           this.failedTiles.delete(key);
-          const screenTile = 128 * step * this.scale,
-            capacity = Math.max(
-              256,
-              Math.min(
-                4096,
-                2 *
-                  Math.ceil(this.width / screenTile + 2) *
-                  Math.ceil(this.height / screenTile + 2),
-              ),
-            );
-          if (this.tiles.size > capacity)
-            this.tiles.delete(this.tiles.keys().next().value);
+          this.trimTiles(visible,b);
           this.dirty = true;
         })
         .catch((error) => {
-          if (generation === this.generation) {
+          if (generation === this.generation && !controller.signal.aborted) {
             if (error.message === "CANCELLED") return;
             const attempts = (this.failedTiles.get(key)?.attempts || 0) + 1;
             const delay = 250 * 2 ** attempts;
@@ -374,11 +486,18 @@ export class MapView {
           }
         })
         .finally(() => {
-          if (generation === this.generation) {
+          if (generation === this.generation && this.tileControllers.get(key)===controller) {
+            this.tileControllers.delete(key);
             this.pending.delete(key);
             this.dirty = true;
           }
         });
+    }
+  }
+  cancelTiles(keep=new Set()) {
+    this.tileControllers??=new Map();
+    for(const [key,controller] of this.tileControllers)if(!keep.has(key)){
+      controller.abort();this.tileControllers.delete(key);this.pending.delete(key);
     }
   }
   visibleMarkers() {
@@ -406,6 +525,7 @@ export class MapView {
     this.onSelect(nearest, point);
   }
   frame(time) {
+    if(this.suspended)return;
     const dt = Math.min(3, (time - this.lastFrame) / 16.667 || 1);
     this.lastFrame = time;
     if (Math.abs(this.scale - this.targetScale) > 1e-7) {
@@ -427,47 +547,21 @@ export class MapView {
       this.velocity.z *= 0.95 ** dt;
       this.changed();
     }
-    if (this.dirty) {
+    if (this.dirty && !this.contextLost) {
       this.dirty = false;
       this.ensureTiles();
       this.draw();
     }
-    requestAnimationFrame((t) => this.frame(t));
+    this.frameId=requestAnimationFrame((t) => this.frame(t));
   }
   draw() {
     const c = this.ctx;
-    c.fillStyle = "#17131f";
+    c.fillStyle = (this.showBiomes && this.backgroundColor) || "#17131f";
     c.fillRect(0, 0, this.width, this.height);
     c.imageSmoothingEnabled = this.smooth;
-    if (this.showBiomes) {
-      const current = this.step();
-      const tiles = [...this.tiles.values()].sort(
-        (a, b) => (a.step === current ? 1 : 0) - (b.step === current ? 1 : 0),
-      );
-      for (const t of tiles) {
-        if (!t.image) continue;
-        const p = this.screen(t.tx * 128 * t.step, t.tz * 128 * t.step),
-          s = 128 * t.step * this.scale;
-        c.drawImage(t.image, p.x, p.y, s, s);
-      }
-    }
-    if (this.grid && this.scale >= 0.125) {
-      const b = this.bounds();
-      c.strokeStyle = "#ffffff24";
-      c.lineWidth = 1;
-      c.beginPath();
-      for (let x = Math.ceil(b.minX / 16) * 16; x < b.maxX; x += 16) {
-        const p = this.screen(x, 0);
-        c.moveTo(Math.round(p.x) + 0.5, 0);
-        c.lineTo(Math.round(p.x) + 0.5, this.height);
-      }
-      for (let z = Math.ceil(b.minZ / 16) * 16; z < b.maxZ; z += 16) {
-        const p = this.screen(0, z);
-        c.moveTo(0, Math.round(p.y) + 0.5);
-        c.lineTo(this.width, Math.round(p.y) + 0.5);
-      }
-      c.stroke();
-    }
+    if (this.showBiomes) this.drawBiomes(c);
+    if(this.markerMode !== "STRUCTURE") drawResources(this,c);
+    if(this.grid) drawCoordinateGrid(this,c);
     const origin = this.screen(0, 0);
     c.strokeStyle = "#ffffff60";
     c.beginPath();
@@ -503,7 +597,6 @@ export class MapView {
           c.strokeRect(p.x - 12, p.y - 12, 24, 24);
         }
       }
-    if(this.markerMode !== "STRUCTURE") drawResources(this,c);
     const ideal = 200 / this.scale,
       power = 10 ** Math.floor(Math.log10(ideal));
     let unit = power;

@@ -3,6 +3,18 @@ import assert from "node:assert/strict";
 import { createRwgProvider } from "../dist/engine/rwg-provider.js";
 import { rwgStructures } from "../dist/engine/rwg-structures.js";
 const profile={noise:"wrapped-perlin",groups:{snow:[1],cold:[1],hot:[1],wet:[],small:[]}};
+
+test('dungeon-only groups leave ordinary output and biome cache intact',async()=>{
+  let samples=0,heights=0;
+  const engine={configure(){},finalChunk(){samples++;return new Int32Array(256).fill(1);},villageViable:()=>true,rawHeight:()=>{heights++;return 0;}};
+  const p=createRwgProvider(engine,profile,{1:'test:a'},{registry:{get:()=>({index:1})},yieldTask:async()=>{},caveEngine:{configure(){},mask(){throw new Error('height rejected');}},dungeonProfile:{undergroundLakes:false,undergroundLavaLakes:false}});
+  const tile={seed:'0',dimension:'overworld',x:0,z:0,width:1,height:1,step:1},q={seed:'0',dimension:'overworld',bounds:{minX:0,minZ:0,maxX:64,maxZ:64}};
+  await p.sampleBiomes(tile);
+  const normal=await p.predictStructures({...q,excludedKinds:['VANILLA_SPAWNER_DUNGEON']});assert.equal(heights,0);
+  assert.deepEqual(await p.predictStructures({...q,structureGroup:'dungeons'}),[]);assert.ok(heights>0);
+  const count=heights;assert.deepEqual(await p.predictStructures(q),normal);assert.equal(heights,count);
+  await p.sampleBiomes(tile);assert.equal(samples,1);
+});
 test('an incomplete raw chunk is not cached and a subsequent retry can recover',async()=>{
  let calls=0;const engine={configure(){},finalChunk(){return ++calls===1?new Int32Array(0):new Int32Array(256).fill(1);}};
  const provider=createRwgProvider(engine,profile,{1:'test:biome'},{registry:{get:()=>({index:1})}});
@@ -22,11 +34,35 @@ test("RWG samples across negative chunk boundaries and maps palette indices",asy
   const count=calls.length;await provider.sampleBiomes(q);assert.equal(calls.length,count);
 });
 test("RWG cache is bounded and resets for a new full-width seed",async()=>{
-  const {provider,calls,seeds}=setup({cacheLimit:1});
+  const {provider,calls,seeds}=setup({cacheLimit:1,rasterCacheBytes:0});
   const q={dimension:"overworld",seed:"9007199254740992",x:0,z:0,width:1,height:1,step:1};
   await provider.sampleBiomes(q);await provider.sampleBiomes({...q,x:16});await provider.sampleBiomes(q);
   assert.equal(calls.length,3);await provider.sampleBiomes({...q,seed:"9007199254740993"});
   assert.deepEqual(seeds,["9007199254740992","9007199254740993"]);
+});
+
+test('sparse exact sampling preserves quarter offsets and avoids whole-chunk generation',async()=>{
+  const calls=[];
+  const engine={configure(){},finalChunk(){throw new Error('whole chunk requested');},finalSamples(x,z,width,height,step){calls.push({x,z,width,height,step});return Int32Array.from({length:width*height},(_,i)=>((x+i%width*step)+3*(z+Math.floor(i/width)*step))&255);}};
+  const p=createRwgProvider(engine,profile,Object.fromEntries(Array.from({length:256},(_,i)=>[i,String(i)])),{registry:{get:key=>({index:Number(key)})},yieldTask:async()=>{}});
+  const q={seed:'9007199254740993',dimension:'overworld',x:-19,z:-23,width:65,height:3,step:4};
+  const got=await p.sampleBiomes(q);
+  assert.deepEqual([...got],Array.from({length:195},(_,i)=>((-17+i%65*4)+3*(-21+Math.floor(i/65)*4))&255));
+  assert.ok(calls.every(c=>c.width<=32&&c.height===1));
+  const count=calls.length;structuredClone(got,{transfer:[got.buffer]});assert.equal(got.byteLength,0);
+  const repeat=await p.sampleBiomes(q);assert.equal(repeat.length,195);assert.equal(calls.length,count);
+});
+
+test('raster cache is byte bounded, invalidated on seed changes, and never caches cancelled strips',async()=>{
+  let calls=0,clock=0,abort;
+  const engine={configure(){},finalSamples(x,z,w,h){calls++;return new Int32Array(w*h).fill(1);}};
+  const p=createRwgProvider(engine,profile,{1:'test:a'},{registry:{get:()=>({index:1})},rasterCacheBytes:4,now:()=>clock+=17,yieldTask:async()=>abort?.abort()});
+  const q={seed:'0',dimension:'overworld',x:0,z:0,width:2,height:1,step:16};
+  await p.sampleBiomes(q);await p.sampleBiomes(q);assert.equal(calls,1);
+  await p.sampleBiomes({...q,x:16});await p.sampleBiomes(q);assert.equal(calls,3);
+  await p.sampleBiomes({...q,seed:'1'});assert.equal(calls,4);
+  abort=new AbortController();await assert.rejects(p.sampleBiomes({...q,x:100,width:65},{signal:abort.signal}),/CANCELLED/);
+  const afterAbort=calls;abort=undefined;await p.sampleBiomes({...q,x:100,width:65});assert.equal(calls,afterAbort+3);
 });
 test("RWG quarter-resolution sampling uses Amidst's two-block centre offset",async()=>{
   const {provider}=setup();

@@ -4,6 +4,7 @@ import {long,parseSeed} from './random.js';
 import {XstrRandom} from './prospecting.js';
 import {islandInRegion} from './end.js';
 import {predictStructures,validateBounds} from './native.js';
+import {validateAsteroidResources,selectAsteroidResource,createFreshEndClassifier} from './asteroid-resources.js';
 
 export const asteroidKinds=Object.freeze({
   'ore.mix.naquadah':'END_NAQUADAH_ASTEROID',
@@ -59,8 +60,12 @@ export function freshIslandExcludes(seed,cx,cz,lookup=islandInRegion) {
     }
   return false;
 }
-export function createAsteroidProvider(input,{yieldTask=()=>new Promise(r=>setTimeout(r,0)),now=()=>performance.now()}={}) {
-  const profile=validateAsteroidProfile(structuredClone(input));
+export function createAsteroidProvider(input,{resourceProfile,yieldTask=()=>new Promise(r=>setTimeout(r,0)),now=()=>performance.now()}={}) {
+  const legacyProfile=validateAsteroidProfile(structuredClone(input));
+  const resources=resourceProfile?validateAsteroidResources(structuredClone(resourceProfile)):null;
+  const end=resources?.dimensions.find(d=>d.routing==='end');
+  if(resources&&(!end||end.id!==1))throw new Error('末地小行星资源维度不匹配');
+  const profile=end?{...legacyProfile,...end.config,...resources.end}:legacyProfile;
   return {apiVersion:1,async predictStructures(q,{signal}={}) {
     if(q.dimension!=='end')return null;
     const seed=BigInt(parseSeed(q.seed)),b=q.bounds;validateBounds(b);
@@ -74,11 +79,14 @@ export function createAsteroidProvider(input,{yieldTask=()=>new Promise(r=>setTi
     const minX=Math.floor(b.minX/16),maxX=Math.floor((b.maxX-1)/16),minZ=Math.floor(b.minZ/16),maxZ=Math.floor((b.maxZ-1)/16);
     if((maxX-minX+1)*(maxZ-minZ+1)>262144)throw new Error('小行星扫描范围过大，请放大地图');
     const cache=new Map(),lookup=(s,rx,rz)=>{const key=`${rx}:${rz}`;if(!cache.has(key))cache.set(key,islandInRegion(s,rx,rz));return cache.get(key);};
+    const isVoid=end?createFreshEndClassifier(seed,resources.end,q.config):null;
     let deadline=now()+16;
     for(let cz=minZ;cz<=maxZ;cz++)for(let cx=minX;cx<=maxX;cx++) {
-      const c=selectAsteroid(seed,cx,cz,profile);
+      const deposit=end?selectAsteroidResource(seed,end.id,cx,cz,end):null;
+      const kind=deposit?.kind==='ASTEROID_VEIN'?asteroidKinds[deposit.id.slice('asteroid.vein:'.length)]:null;
+      const c=end?(kind?{kind,x:deposit.x,y:deposit.y,z:deposit.z,size:deposit.size}:null):selectAsteroid(seed,cx,cz,profile);
       if(c&&!excluded.has(c.kind)&&c.x>=b.minX&&c.x<b.maxX&&c.z>=b.minZ&&c.z<b.maxZ
-          &&!chaosExcludes(cx,cz,config)&&!freshIslandExcludes(seed,cx,cz,lookup))
+          &&(isVoid?isVoid(cx,cz):!chaosExcludes(cx,cz,config)&&!freshIslandExcludes(seed,cx,cz,lookup)))
         result.push({...c,subtype:'GalacticGreg End asteroid',certainty:'EXACT_FRESH_END',source:'GregTech / GalacticGreg'});
       if(now()>=deadline){await yieldTask();if(signal?.aborted)throw new Error('CANCELLED');deadline=now()+16;}
     }

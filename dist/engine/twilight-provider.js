@@ -1,9 +1,11 @@
 import {parseSeed} from './random.js';
 import {validateBounds} from './native.js';
 import {biomeRegistry,markerTypeKey} from './catalog.js';
+import {createBiomeRasterCache} from './biome-raster-cache.js';
 
-export function createTwilightProvider(engine,input,keys,{registry=biomeRegistry,yieldTask=()=>new Promise(r=>setTimeout(r,0)),now=()=>performance.now()}={}) {
+export function createTwilightProvider(engine,input,keys,{registry=biomeRegistry,yieldTask=()=>new Promise(r=>setTimeout(r,0)),now=()=>performance.now(),rasterCacheBytes=8*1024*1024}={}) {
   const profile=structuredClone(input),palette={...keys};
+  const rasters=createBiomeRasterCache(rasterCacheBytes);
   if(typeof profile.oldMapGen!=='boolean'||!Number.isInteger(profile.dimensionId))throw new Error('暮色配置无效');
   let currentSeed;
   const check=signal=>{if(signal?.aborted)throw new Error('CANCELLED');};
@@ -13,30 +15,53 @@ export function createTwilightProvider(engine,input,keys,{registry=biomeRegistry
     const seed=parseSeed(q.seed);if(seed!==currentSeed){currentSeed=undefined;engine.configure(seed,profile.oldMapGen);currentSeed=seed;}
   }
   const index=id=>{const biome=registry.get(palette[id]);if(!biome)throw new Error('暮色返回了未登记的群系：'+id);return biome.index;};
+  function raster(x,z,width,height,quarter) {
+    // Vanilla VoronoiZoom sizes its intermediate raster with width >> 2.
+    // Pad full-resolution requests so an unaligned origin cannot overrun it.
+    const w=quarter?width:Math.ceil(width/4)*4,h=quarter?height:Math.ceil(height/4)*4;
+    const data=engine.biomes(x,z,w,h,quarter);
+    if(data?.length!==w*h)throw new Error('暮色返回了不完整的底图');
+    return {data,width:w};
+  }
   return {apiVersion:1,async sampleBiomes(q,{signal}={}) {
     if(!Number.isInteger(q.width)||!Number.isInteger(q.height)||q.width<1||q.height<1||q.width*q.height>262144
       ||!Number.isInteger(q.step)||q.step<1||q.step>256||!Number.isSafeInteger(q.x)||!Number.isSafeInteger(q.z))throw new Error('暮色底图请求无效');
     validateBounds({minX:q.x,minZ:q.z,maxX:q.x+(q.width-1)*q.step+1,maxZ:q.z+(q.height-1)*q.step+1},17179869184);
-    check(signal);configure(q);
-    const result=new Uint16Array(q.width*q.height),quarter=q.step>=4;
+    check(signal);
+    const quarter=q.step>=4;
+    if(q.step===4&&(q.x%4||q.z%4))throw new Error('暮色四分之一底图须对齐 4 方块网格');
+    const space=`${parseSeed(q.seed)}/${q.dimension}/${quarter?'quarter':'full'}`;
+    configure(q);
+    const cached=rasters.get(space,q);if(cached)return cached;
+    const result=new Uint16Array(q.width*q.height);
+    let deadline=now()+16;
     if(q.step===1||q.step===4) {
-      if(quarter&&(q.x%4||q.z%4))throw new Error('暮色四分之一底图须对齐 4 方块网格');
-      for(let row=0;row<q.height;row+=16) {
-        const height=Math.min(16,q.height-row),raw=engine.biomes(q.x/q.step,q.z/q.step+row,q.width,height,quarter);
-        if(raw?.length!==q.width*height)throw new Error('暮色返回了不完整的底图');
-        result.set(Uint16Array.from(raw,index),row*q.width);await yieldTask();check(signal);
+      for(let row=0;row<q.height;row+=32) {
+        check(signal);
+        const height=Math.min(32,q.height-row),raw=raster(q.x/q.step,q.z/q.step+row,q.width,height,quarter);
+        for(let dz=0;dz<height;dz++)result.set(Uint16Array.from(raw.data.slice(dz*raw.width,dz*raw.width+q.width),index),(row+dz)*q.width);
+        if(now()>=deadline){await yieldTask();check(signal);deadline=now()+16;}
       }
     } else {
-      // Distant views downsample the same quarter layer used by Amidst, without huge intermediate rasters.
-      let deadline=now()+16;
-      for(let row=0;row<q.height;row++)for(let col=0;col<q.width;col++) {
-        const scale=quarter?4:1,raw=engine.biomes(Math.floor((q.x+col*q.step)/scale),Math.floor((q.z+row*q.step)/scale),1,1,quarter);
-        if(raw?.length!==1)throw new Error('暮色返回了不完整的底图');
-        result[row*q.width+col]=index(raw[0]);
+      // Batch a bounded source rectangle before downsampling. GenLayer's shared
+      // neighbourhood work is much more expensive than copying extra pixels.
+      const scale=quarter?4:1,stride=q.step/scale;
+      const columns=Math.max(1,Math.floor(127/stride)+1),rows=Math.max(1,Math.floor(63/stride)+1);
+      for(let row=0;row<q.height;row+=rows)for(let col=0;col<q.width;col+=columns) {
+        check(signal);
+        const w=Math.min(columns,q.width-col),h=Math.min(rows,q.height-row);
+        const x=Math.floor((q.x+col*q.step)/scale),z=Math.floor((q.z+row*q.step)/scale);
+        const width=Math.floor((q.x+(col+w-1)*q.step)/scale)-x+1,height=Math.floor((q.z+(row+h-1)*q.step)/scale)-z+1;
+        const raw=raster(x,z,width,height,quarter);
+        for(let dz=0;dz<h;dz++)for(let dx=0;dx<w;dx++) {
+          const sx=Math.floor((q.x+(col+dx)*q.step)/scale)-x,sz=Math.floor((q.z+(row+dz)*q.step)/scale)-z;
+          result[(row+dz)*q.width+col+dx]=index(raw.data[sz*raw.width+sx]);
+        }
         if(now()>=deadline){await yieldTask();check(signal);deadline=now()+16;}
       }
     }
-    return result;
+    // Even short requests allow queued cancellation before caching completion.
+    await yieldTask();check(signal);rasters.put(space,q,result);return result;
   },async predictStructures(q,{signal}={}) {
     validateBounds(q.bounds);check(signal);configure(q);
     const b=q.bounds,result=[],excluded=new Set(q.excludedKinds||[]);

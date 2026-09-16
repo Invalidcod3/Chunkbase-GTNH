@@ -10,9 +10,9 @@ public final class IsolatedCaptureEntry {
         Path output=Paths.get(options.getProperty("output"));Files.createDirectories(output);
         URL helper=Paths.get(options.getProperty("helper")).toUri().toURL();
         String mode=options.getProperty("mode","observed");
-        if(!mode.equals("observed")&&!mode.equals("worker")&&!mode.equals("resources"))throw new IllegalArgumentException("Unknown capture mode");
+        if(!mode.equals("observed")&&!mode.equals("worker")&&!mode.equals("resources")&&!mode.equals("asteroid-resources"))throw new IllegalArgumentException("Unknown capture mode");
         try(URLClassLoader loader=new URLClassLoader(new URL[]{helper},ClassLoader.getSystemClassLoader().getParent())) {
-            Class<?> entry=loader.loadClass("amidst.web.profile."+(mode.equals("resources")?"ResourceCapture":mode.equals("observed")?"LiveCaptureObserved":"LiveCapture"));
+            Class<?> entry=loader.loadClass("amidst.web.profile."+(mode.equals("asteroid-resources")?"AsteroidResourceCapture":mode.equals("resources")?"ResourceCapture":mode.equals("observed")?"LiveCaptureObserved":"LiveCapture"));
             entry.getMethod("agentmain",String.class,Instrumentation.class).invoke(null,output.toString(),instrumentation);
         }catch(Throwable error){
             StringBuilder message=new StringBuilder();

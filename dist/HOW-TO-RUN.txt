@@ -1,0 +1,6 @@
+Windows: install Node.js, then double-click Start.cmd. Keep its window open while using the map.
+Other platforms: run node start-local.mjs, then open the printed local URL.
+Do not double-click index.html: browser restrictions prevent modules and workers under file://.
+
+The base static ZIP has only built-in predictions. The private local calibrated ZIP also contains the explicitly captured environment generators. Check Sources in the app for the package identity. Extract each ZIP into a separate folder.
+The source ZIP does not contain the private generators or compiler dependencies. See docs/local-delivery.md for rebuilding.

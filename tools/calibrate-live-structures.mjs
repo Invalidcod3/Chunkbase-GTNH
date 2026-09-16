@@ -29,7 +29,7 @@ for(const {query:q,response} of reference.cases.filter(c=>c.query.command==='str
   for(const m of expected)report.byKind[m.kind]=(report.byKind[m.kind]||0)+1;
 }
 assert.ok(report.byKind.VILLAGE>0&&report.byKind.AUTOMAGY_NETHER_SPIRE>0);
-for(const path of ['dist/environment.json','dist/engine/native.js','dist/engine/mod-structures.js','dist/engine/rwg-structures.js','dist/engine/random.js','private-packs/rwg-terrain-browser/selection.js','private-packs/rwg-terrain-browser/profile.json','private-packs/runtime-session/remaining-reference.json'])
+for(const path of ['dist/environment.json','dist/engine/native.js','dist/engine/mod-structures.js','dist/engine/rwg-structures.js','dist/engine/gpu-compute.js','dist/engine/gpu-compute-plans.js','dist/engine/random.js','private-packs/rwg-terrain-browser/selection.js','private-packs/rwg-terrain-browser/profile.json','private-packs/runtime-session/remaining-reference.json'])
   report.hashes[path]=createHash('sha256').update(await readFile(new URL(path,root))).digest('hex');
 await writeFile(new URL('private-packs/runtime-session/live-structures-validation.json',root),JSON.stringify(report,null,2));
 console.log(JSON.stringify({...report,hashes:undefined}));

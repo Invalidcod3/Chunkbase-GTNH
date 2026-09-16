@@ -1,0 +1,372 @@
+{
+  "scope": "Copied desktop SpawnSearch executed on JVM against detached block identities; search/RNG equivalence only, no generated terrain or save accuracy claim",
+  "cases": 40,
+  "hashes": {
+    "SpawnSearch.java": "6d4f4c2d81763edd3cd4a8ff5b2f5f36ba8a47df272ff18f483fd4cf642a96b1",
+    "RwgSpawnCaves.java": "0b66b138700e0db2389bb709f08e3117a54841987297fbf75b39ec2db3344880",
+    "RwgChunkBiomeReplay.java": "a3584ad1ef0c3d6c8b500c0b6577cbc34682197bf9cd16d394a1f327f759ebc6",
+    "SavedWorldSpawn.java": "f9284f15b69e27afa664408af0dedaadd407e25a681f536f62140da35b35dc84"
+  },
+  "reference": [
+    {
+      "seed": "0",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "0",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1,
+      "x": -262,
+      "z": 498,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "0",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 17,
+      "x": -448,
+      "z": 439,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "0",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 999,
+      "x": -1029,
+      "z": 803,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "0",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1000,
+      "x": -1042,
+      "z": 791,
+      "moves": 1000,
+      "calls": 1000
+    },
+    {
+      "seed": "0",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "0",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1,
+      "x": -262,
+      "z": 498,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "0",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 17,
+      "x": -448,
+      "z": 439,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "0",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 999,
+      "x": -1029,
+      "z": 803,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "0",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1000,
+      "x": -1042,
+      "z": 791,
+      "moves": 1000,
+      "calls": 1000
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1,
+      "x": -278,
+      "z": 501,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 17,
+      "x": -248,
+      "z": 421,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 999,
+      "x": 903,
+      "z": -1092,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1000,
+      "x": 861,
+      "z": -1108,
+      "moves": 1000,
+      "calls": 1000
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1,
+      "x": -278,
+      "z": 501,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 17,
+      "x": -248,
+      "z": 421,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 999,
+      "x": 903,
+      "z": -1092,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "-8138049151491905853",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1000,
+      "x": 861,
+      "z": -1108,
+      "moves": 1000,
+      "calls": 1000
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1,
+      "x": -272,
+      "z": 493,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 17,
+      "x": -499,
+      "z": 600,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 999,
+      "x": -658,
+      "z": 1501,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1000,
+      "x": -651,
+      "z": 1489,
+      "moves": 1000,
+      "calls": 1000
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1,
+      "x": -272,
+      "z": 493,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 17,
+      "x": -499,
+      "z": 600,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 999,
+      "x": -658,
+      "z": 1501,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "9223372036854775807",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1000,
+      "x": -651,
+      "z": 1489,
+      "moves": 1000,
+      "calls": 1000
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1,
+      "x": -262,
+      "z": 498,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 17,
+      "x": -448,
+      "z": 439,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 999,
+      "x": -1029,
+      "z": 803,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "net.minecraft.world.WorldProviderSurface",
+      "accept": 1000,
+      "x": -1042,
+      "z": 791,
+      "moves": 1000,
+      "calls": 1000
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 0,
+      "x": -300,
+      "z": 500,
+      "moves": 0,
+      "calls": 1
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1,
+      "x": -262,
+      "z": 498,
+      "moves": 1,
+      "calls": 2
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 17,
+      "x": -448,
+      "z": 439,
+      "moves": 17,
+      "calls": 18
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 999,
+      "x": -1029,
+      "z": 803,
+      "moves": 999,
+      "calls": 1000
+    },
+    {
+      "seed": "-9223372036854775808",
+      "provider": "biomesoplenty.common.world.WorldProviderSurfaceBOP",
+      "accept": 1000,
+      "x": -1042,
+      "z": 791,
+      "moves": 1000,
+      "calls": 1000
+    }
+  ]
+}

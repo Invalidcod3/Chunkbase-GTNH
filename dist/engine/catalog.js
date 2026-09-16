@@ -106,6 +106,19 @@ export const dimensions = [
     note: "四种冥王星生物群系尚未接入；可以预测地牢。",
   },
 ];
+// Local function packs can add dimensions without changing map/cache code.
+export function registerDimension(entry) {
+  let d=dimensions.find(d=>d.key===entry.key);
+  if(d){
+    for(const key of ['zh','en'])if(typeof entry[key]==='string'&&entry[key])d[key]=entry[key];
+    return d;
+  }
+  if(!/^[a-z][a-z0-9_]{0,63}$/.test(entry.key)||!Number.isInteger(entry.id)||Math.abs(entry.id)>2147483647
+    ||typeof entry.zh!=='string'||!entry.zh||typeof entry.en!=='string'||!entry.en)throw new Error('新增维度缺少有效名称或 ID');
+  d={key:entry.key,id:entry.id,zh:entry.zh,en:entry.en,map:false,structures:false,
+    note:'此维度已接入资源预测；底图及专属结构以已安装功能为准。'};
+  dimensions.push(d);return d;
+}
 const legacyBiomes = {
   3000: { zh: "末地虚空", en: "End void", color: "#17131f" },
   3001: { zh: "中央末地", en: "Central End", color: "#c9c29b" },
@@ -165,6 +178,12 @@ for (const [id, entry] of Object.entries(legacyBiomes)) {
 for (const d of dimensions) if (d.biome !== undefined) d.biome = keys[d.biome];
 export const biomeByIndex = (index) => biomeRegistry.at(index);
 export const kinds = {
+  WORLD_SPAWN:{zh:'世界出生点',en:'World spawn',color:'#edda6b'},
+  DEEP_DARK_DUNGEON:{zh:'深暗之域地牢',en:'Deep Dark dungeon',color:'#9b91b1'},
+  ANUBIS_ROBOT_VILLAGE:{zh:'机器人村庄',en:'Robot village',color:'#d8b582'},
+  HORUS_OBSIDIAN_PYRAMID:{zh:'黑曜石金字塔',en:'Obsidian pyramid',color:'#b894ce'},
+  MEHEN_DARK_MATTER_ASTEROID:{zh:'暗物质小行星',en:'Dark matter asteroid',color:'#9172b9'},
+  ROSS_128B_RUIN:{zh:'Ross 128b 遗迹候选',en:'Ross 128b ruin candidate',color:'#b9a485'},
   HEE_BIOME_ISLAND: {
     zh: "HEE 生物群系岛",
     en: "HEE biome island",
@@ -185,6 +204,10 @@ export const kinds = {
   MOON_VILLAGE: { zh: "月球村庄", en: "Moon village", color: "#a3d89e" },
   VILLAGE: { zh: "村庄候选", en: "Village candidate", color: "#d9b773" },
   VANILLA_SPAWNER_DUNGEON: {zh:"刷怪笼候选",en:"Spawner dungeon candidate",color:"#a5a5a5"},
+  HOLLOW_ASTEROID: {zh:'空心小行星',en:'Hollow asteroid',color:'#7caa69'},
+  ASTEROID_BASE_HUMAN: {zh:'人类基地（兼容候选）',en:'Human base (logical start)',color:'#8eaaa9'},
+  ASTEROID_BASE_MECHANICAL: {zh:'机械基地（兼容候选）',en:'Mechanical base (logical start)',color:'#bbbbbb'},
+  ASTEROID_BASE_BIRD: {zh:'鸟类基地（兼容候选）',en:'Bird base (logical start)',color:'#a3a08c'},
   NETHER_FORTRESS: {zh:"下界要塞",en:"Nether fortress",color:"#a76d65"},
   LOOTGAMES_DUNGEON: {zh:"LootGames 地牢",en:"LootGames dungeon",color:"#c69bdb"},
   TINKERS_SLIME_ISLAND: {zh:"史莱姆空岛",en:"Slime island",color:"#74cad3"},
@@ -205,6 +228,7 @@ for (const key of ["mars", "ceres", "io", "enceladus", "proteus", "pluto"]) {
   };
 }
 export const certainty = {
+  RECORDED:'存档记录',
   EXACT: "种子定位",
   POSSIBLE: "候选位置",
   EXPECTED: "预期位置",
@@ -222,4 +246,29 @@ export const twilightFeatures=[
   ['FINAL_CASTLE','最终城堡','Final Castle',19],['MUSHROOM_TOWER','蘑菇塔','Mushroom Tower',20],
 ];
 for(const [key,zh,en] of twilightFeatures)kinds['TWILIGHT_'+key]={zh,en,color:'#b8c785'};
-export const markerTypeKey=m=>m.kind==='TWILIGHT_FEATURE'?'TWILIGHT_'+m.subtype:m.kind;
+// Keep the order, entrances and icons aligned with GtnhRoguelikeDungeonType.
+export const roguelikeTypes=[
+  ['DESERT','沙漠','Desert','金字塔入口','Pyramid entrance','desert'],
+  ['FOREST','森林','Forest','房屋入口','House entrance','woodland_mansion'],
+  ['ICE','冰原','Ice','掩体入口','Bunker entrance','igloo'],
+  ['JUNGLE','丛林','Jungle','丛林入口','Jungle entrance','jungle'],
+  ['MESA','恶地','Mesa','Etho 入口','Etho entrance','desert'],
+  ['MOUNTAIN','山地','Mountain','Eniko 入口','Eniko entrance','stronghold'],
+  ['PLAINS','平原','Plains','塔楼入口','Rogue tower entrance','village'],
+  ['SWAMP','沼泽','Swamp','女巫小屋入口','Witch-house entrance','witch'],
+].map(([subtype,zh,en,entranceZh,entranceEn,icon])=>({
+  subtype,key:'ROGUELIKE_DUNGEON_'+subtype,zh,en,entranceZh,entranceEn,icon,
+}));
+for(const type of roguelikeTypes)kinds[type.key]={
+  zh:`Roguelike 地牢－${type.zh}`,
+  en:`Roguelike dungeon — ${type.en}`,
+  color:kinds.ROGUELIKE_DUNGEON.color,
+};
+export const markerTypeKey=m=>{
+  if(m.kind==='TWILIGHT_FEATURE')return 'TWILIGHT_'+m.subtype;
+  if(m.kind==='ROGUELIKE_DUNGEON'){
+    const subtype=String(m.subtype??'').trim().toUpperCase();
+    return roguelikeTypes.find(type=>type.subtype===subtype)?.key||m.kind;
+  }
+  return m.kind;
+};

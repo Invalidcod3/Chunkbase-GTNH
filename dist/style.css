@@ -184,6 +184,16 @@ hr {
   font-size: 0.8125rem;
   color: #d2d2cc;
 }
+#mode-note[data-biome]::before {
+  content: "";
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 0.45em;
+  border: 1px solid #ffffff80;
+  border-radius: 2px;
+  background: var(--biome-color);
+}
 #progress {
   margin-left: auto;
 }
@@ -212,6 +222,10 @@ hr {
   padding-left: 0.4rem;
 }
 .layers input[type="search"], .layers input[type="number"], .layers select { min-width: 0; width: 100%; }
+#retry-map { pointer-events: auto; }
+#color-biome { min-width: 0; max-width: 70%; }
+#strongholds { max-width: 220px; }
+#ore-height input { width: 48%; display: inline-block; }
 #resource-controls label { display: block; font-size: 0.8rem; }
 .layers .mode-control { display: block; }
 .swatch {
@@ -244,17 +258,6 @@ hr {
 }
 .detail button {
   margin-top: 0.4rem;
-}
-.no-map {
-  position: absolute;
-  left: 45%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(340px, 70%);
-  text-align: center;
-}
-.no-map p {
-  color: #c8ccc5;
 }
 .zoom-controls {
   position: absolute;
@@ -376,6 +379,9 @@ dialog::backdrop {
 .setting-row input[type="number"] {
   width: 8rem;
 }
+#gpu-rendering, #compute-parallelism, #compute-allocation { display: block; width: 100%; margin: .5rem 0; accent-color: var(--accent); }
+.setting-ticks { display: flex; justify-content: space-between; font-size: .75rem; opacity: .65; padding: 0 .4rem; }
+#gpu-level-label, #parallelism-label { font-size: .85rem; text-align: right; }
 .file-control {
   display: flex;
   flex-direction: column;
@@ -498,12 +504,6 @@ button[hidden],
     width: min(240px, calc(100% - 175px));
     padding: 0.5rem;
     font-size: 0.8125rem;
-  }
-  .no-map {
-    left: calc(50% - 55px);
-    width: calc(100% - 185px);
-    font-size: 0.8125rem;
-    padding: 0.5rem;
   }
   .zoom-controls {
     left: 10px;

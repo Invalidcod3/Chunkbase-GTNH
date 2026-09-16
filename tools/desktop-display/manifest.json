@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/Invalidcod3/Amidst-GTNH",
+  "baseCommit": "c5e09fedf99ee211b8073d38060b048fb4e03179",
+  "sourceState": "local working copy, including uncommitted updates",
+  "license": "GPL-3.0",
+  "files": {
+    "GtnhBiomeColorPalette.java": {
+      "path": "src/main/java/amidst/gtnh/worker/GtnhBiomeColorPalette.java",
+      "sha256": "a2afe553df734fa44313e0b02f02bd1584e63d2981534c3b778324a68287c93e"
+    },
+    "zh_CN.json": {
+      "path": "src/main/resources/amidst/i18n/zh_CN.json",
+      "sha256": "2e37b148e94e342e166e70a0744a7a5e36fac96d2b6f65167da1477413178ab2"
+    },
+    "dimension-name-audit.md": {
+      "path": "docs/dimension-name-audit.md",
+      "sha256": "0643addcd97afd5f243150114e5071e3cee87465895cdd8ace603490948c46ba"
+    },
+    "pluto-surface-colors.md": {
+      "path": "docs/pluto-surface-colors.md",
+      "sha256": "ef5c6bbba0773bab3ee91bbd0c2c0ea9bb6108da7d63c2a355568debc083929d"
+    }
+  },
+  "nameChanges": [
+    {
+      "key": "ross128b",
+      "before": "Ross 128b",
+      "after": "罗斯128b"
+    },
+    {
+      "key": "ross128ba",
+      "before": "Ross 128ba",
+      "after": "罗斯128ba"
+    },
+    {
+      "key": "barnarda_e",
+      "before": "巴纳德 E",
+      "after": "巴纳德E"
+    },
+    {
+      "key": "barnarda_f",
+      "before": "巴纳德 F",
+      "after": "巴纳德F"
+    },
+    {
+      "key": "barnarda_c",
+      "before": "巴纳德 C",
+      "after": "巴纳德C"
+    },
+    {
+      "key": "vega_b",
+      "before": "织女星 B",
+      "after": "织女一B"
+    },
+    {
+      "key": "tau_ceti_e",
+      "before": "天仓五 E",
+      "after": "鲸鱼座T星E"
+    },
+    {
+      "key": "neper",
+      "before": "Neper",
+      "after": "奈佩里"
+    },
+    {
+      "key": "maahes",
+      "before": "Maahes",
+      "after": "马赫斯"
+    },
+    {
+      "key": "centauri_bb",
+      "before": "半人马座 α Bb",
+      "after": "半人马座α星Bb"
+    },
+    {
+      "key": "mehen",
+      "before": "Mehen 小行星带",
+      "after": "迈罕带"
+    }
+  ]
+}

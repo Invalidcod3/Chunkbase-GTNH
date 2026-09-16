@@ -8,7 +8,9 @@ const profile=JSON.parse(await readFile(new URL('resource-profile.json',root),'u
 const reference=JSON.parse(await readFile(new URL('resource-reference.json',root),'utf8'));
 assert.equal(reference.complete,true,'Incomplete live capture');
 const provider=createProspectingProvider(profile,Object.fromEntries(profile.dimensions.map(d=>[d.name,d.id])));
-const report={cases:0,dimensions:[],ores:0,fluidFields:0,fluidCells:0,mismatches:0};
+const ap=JSON.parse(await readFile(new URL('asteroid-resource-profile.json',root),'utf8'));
+const replaced=new Set(ap.dimensions.map(d=>d.id));
+const report={cases:0,dimensions:[],ores:0,fluidFields:0,fluidCells:0,mismatches:0,replacedAsteroidCases:0};
 const dimensions=new Set();
 function normalize(d,mode) {
   assert.ok(!d.depleted&&!d.currentAmounts?.some(Boolean),'Save state is not a prediction oracle');
@@ -18,6 +20,8 @@ function normalize(d,mode) {
   return mode==='ORES'?{...basic,materials:d.materials,minY:d.minY,maxY:d.maxY,icon:d.icon}:{...basic,amounts:d.amounts};
 }
 for(const {query:q,response} of reference.cases) {
+  // Old Worker 21 used ordinary vein grids here. The new, separate Java oracle supersedes them.
+  if(q.marker_mode==='ORES'&&replaced.has(q.dimension)){report.replacedAsteroidCases++;continue;}
   const dimension=profile.dimensions.find(d=>d.id===q.dimension).name;
   const result=validateResources(await provider.predictResources({seed:q.seed,dimension,mode:q.marker_mode,bounds:{minX:q.x,minZ:q.z,maxX:q.x+q.width,maxZ:q.z+q.height}}),q.marker_mode);
   const expected=response.prospecting.deposits;

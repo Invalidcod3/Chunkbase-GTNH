@@ -5,7 +5,7 @@ from pathlib import Path
 import re
 import socket
 
-READ_ONLY_COMMANDS=('hello','biomes','compare_biomes','structures','prospecting_catalog','prospecting')
+READ_ONLY_COMMANDS=('hello','biomes','compare_biomes','structures','prospecting_catalog','prospecting','spawn')
 
 def query(instance, command, seed=0, x=0, z=0, width=16, height=16, step=1, *, dimension=0, dimension_key=None, marker_mode='ORES', structure_group='standard', vanilla_dungeons=False):
     if command not in READ_ONLY_COMMANDS:raise ValueError('Read-only command required')
@@ -31,11 +31,16 @@ def query(instance, command, seed=0, x=0, z=0, width=16, height=16, step=1, *, d
     if command=='prospecting':request['markerMode']=marker_mode
     if command=='structures':request['structureGroup']=structure_group
     if vanilla_dungeons:request['vanillaDungeonsOnly']=True
-    with socket.create_connection(('127.0.0.1',port),timeout=5) as connection:
-        connection.settimeout(35)
-        connection.sendall((json.dumps(request)+'\n').encode())
-        data=connection.makefile('rb').readline(16*1024*1024)
-    response=json.loads(data)
+    def send():
+        with socket.create_connection(('127.0.0.1',port),timeout=5) as connection:
+            connection.settimeout(35)
+            connection.sendall((json.dumps(request)+'\n').encode())
+            return json.loads(connection.makefile('rb').readline(16*1024*1024))
+    response=send()
+    # Retry only an explicit version rejection, and only the reviewed current protocol.
+    if isinstance(response,dict) and response.get('protocol')==25 and str(response.get('error','')).startswith('unsupported protocol '):
+        request['protocol']=25
+        response=send()
     # Remove token-named fields even in a malformed/nested error response.
     def scrub(value):
         if isinstance(value,dict):return {k:scrub(v) for k,v in value.items() if k.lower()!='token'}

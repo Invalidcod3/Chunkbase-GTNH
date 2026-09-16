@@ -23,7 +23,8 @@ public final class ResourceCapture {
             if(!m.getName().equals(name)||m.getParameterTypes().length!=args.length)continue;
             boolean fits=true;Class<?>[] types=m.getParameterTypes();
             for(int i=0;i<args.length;i++)if(args[i]!=null&&!types[i].isInstance(args[i])
-                &&!(types[i]==int.class&&args[i] instanceof Integer))fits=false;
+                &&!(types[i]==int.class&&args[i] instanceof Integer)
+                &&!(types[i]==float.class&&args[i] instanceof Float))fits=false;
             if(fits){m.setAccessible(true);return m.invoke(owner instanceof Class?null:owner,args);}
         }
         throw new NoSuchMethodException(type.getName()+"."+name);

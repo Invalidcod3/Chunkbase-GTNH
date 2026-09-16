@@ -39,7 +39,7 @@ const only=values=>values.filter(v=>v.kind==='VANILLA_SPAWNER_DUNGEON');
 const full=only(await provider.predictStructures(q));assert.deepEqual(order(full),order(reference.cases[0].response.structures));
 const split=q.bounds.minX+251,left=only(await provider.predictStructures({...q,bounds:{...q.bounds,maxX:split}})),right=only(await provider.predictStructures({...q,bounds:{...q.bounds,minX:split}}));
 assert.deepEqual(order([...left,...right]),order(full));report.providerQueries=3;
-for(const file of ['dist/engine/dungeons.js','dist/engine/rwg-provider.js','dist/engine/rwg-structures.js','dist/engine/random.js','dist/environment.json',
+for(const file of ['dist/engine/dungeons.js','dist/engine/rwg-provider.js','dist/engine/rwg-structures.js','dist/engine/gpu-compute.js','dist/engine/gpu-compute-plans.js','dist/engine/random.js','dist/environment.json',
   'private-packs/cave-browser/selection.js','private-packs/cave-browser/profile.json','private-packs/runtime-session/cave-oracle.json','private-packs/runtime-session/dungeon-reference.json','private-packs/rwg-terrain-browser/selection.js','private-packs/rwg-terrain-browser/profile.json'])
   report.hashes[file]=createHash('sha256').update(await readFile(new URL(file,root))).digest('hex');
 await writeFile(new URL('private-packs/runtime-session/dungeon-validation.json',root),JSON.stringify(report,null,2));
