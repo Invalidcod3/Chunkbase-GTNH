@@ -12,8 +12,8 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .brand small{font:18px/1 Minecraft,monospace;margin-top:11px;white-space:nowrap}
 .toolbar input,.toolbar button,.toolbar select,.filter-panel input,.filter-panel select,.filter-panel button,.map-panel button,.coordinates input{color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px}
 .toolbar button:hover,.filter-panel button:hover,.map-panel button:hover{background:var(--hover);border-color:#818b9d}
-.seed-control{flex:0 1 290px;gap:12px;font-size:15px}
-.seed-control input{width:100%;height:40px;min-width:150px;font-family:inherit;padding:0 12px;letter-spacing:.2px}
+.seed-control{flex:0 1 290px;min-width:0;gap:12px;font-size:15px}
+.seed-control input{width:0;flex:1;min-width:0;height:40px;font-family:inherit;padding:0 12px;letter-spacing:.2px}
 .seed-control input::placeholder{color:#939aa8}
 .icon-button{width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;padding:8px;flex:none}
 .ui-icon{display:inline-block;width:22px;height:22px;background:currentColor;mask:var(--icon) center/contain no-repeat;flex:none}
@@ -79,10 +79,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visi
 .sidebar-heading strong{font-size:16px;font-weight:500}
 .sidebar-heading .collapse{transition:transform var(--motion) var(--ease)}
 .sidebar-content{width:285px;min-height:0;display:flex;flex:1;flex-direction:column;opacity:1;transition:opacity 120ms}
-.filter-panel.is-collapsed{width:45px}
-.is-collapsed .sidebar-content{opacity:0;pointer-events:none;visibility:hidden}
-.is-collapsed .sidebar-heading strong{visibility:hidden}
-.is-collapsed .collapse{transform:rotate(180deg)}
+.filter-panel.is-collapsed{width:0}
 .filter-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#525967 transparent}
 .section-toggle{display:flex;align-items:center;gap:14px;width:100%;height:45px;padding:0 14px 0 11px!important;background:transparent!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;text-align:left;font-size:15px}
 .section-toggle>.ui-icon{width:22px;margin-right:2px}
@@ -141,25 +138,44 @@ dialog{--border:#c9cec7;--accent:#426846;color:#263128;color-scheme:light}
 #detail-content{max-width:420px;font-size:12px}
 #detail-content p{display:block;margin:3px 0;color:#d0d5de}
 #detail-content:empty{display:none}
-@media(min-width:701px) and (max-width:1100px){
- .toolbar{display:grid;grid-template-columns:minmax(200px,1fr) auto auto auto;grid-template-rows:42px 40px;min-height:106px;gap:8px 14px}
- .brand{grid-column:1/4;grid-row:1;margin:0}
- .toolbar-actions{grid-column:4;grid-row:1;justify-self:end}
- .seed-control{grid-column:1;grid-row:2;width:auto}
- .toolbar-control:nth-of-type(1){grid-column:2;grid-row:2}
- .toolbar-control:nth-of-type(2){grid-column:3;grid-row:2}
- .grid-control{grid-column:4;grid-row:2;justify-self:end}
+/* Reserve a row for branding and actions before translated controls get tight.
+   Named areas also keep browser zoom and tablet widths free of implicit tracks. */
+.toolbar{flex-shrink:0}
+@media(max-width:1600px){
+ .toolbar{display:grid;height:auto;min-height:0;padding:8px 12px;gap:8px 14px;grid-template-columns:minmax(200px,1fr) minmax(180px,240px) minmax(175px,240px) auto;grid-template-areas:"brand brand brand actions" "seed dimension layer grid";grid-template-rows:auto auto}
+ .brand{grid-area:brand;margin:0}
+ .toolbar-actions{grid-area:actions;justify-self:end;margin:0;gap:8px}
+ .seed-control{grid-area:seed;width:auto;min-width:0}
+ .toolbar-control:has(#dimension-menu){grid-area:dimension}
+ .toolbar-control:has(#layer-menu){grid-area:layer}
+ .toolbar-control{min-width:0;gap:8px}
+ .toolbar .select-menu,.toolbar #layer-menu{width:0;flex:1;min-width:0}
+ .toolbar .select-trigger{min-width:0}
+ .grid-control{grid-area:grid;justify-self:end}
+ .brand-logo{height:42px;width:48px}
+ .brand b{font-size:27px}
+ .brand small{font-size:14px;margin-top:4px}
+ .select-popup{max-height:min(440px,calc(100dvh - 180px))}
+}
+@media(max-width:900px){
+ .toolbar{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;grid-template-areas:"brand brand actions" "seed seed seed" "dimension layer grid";gap:8px 10px}
+ .toolbar-control{font-size:13px}
+ #layer-menu .select-popup{left:auto;right:0}
+}
+@media(max-width:600px){
+ .toolbar-control{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;font-size:12px}
+ .toolbar .select-menu,.toolbar #layer-menu{width:100%}
+ .grid-control{align-self:end;height:40px}
+ .brand-logo{width:34px;height:34px}
+ .brand b{font-size:23px}
+ .brand small{font-size:11px}
+}
+@media(max-width:480px){
+ .brand small{display:none}
+ .toolbar-actions{gap:6px}
 }
 @media(max-width:700px){.detail{max-width:calc(100% - 24px)}.detail strong{font-size:13px}}
-.filter-panel.is-collapsed{width:0;border:0;overflow:visible;background:transparent}
-.is-collapsed .sidebar-heading{position:absolute;right:16px;top:16px;z-index:4;height:42px;border:0}
-.is-collapsed .sidebar-heading strong{display:none}
-.is-collapsed .sidebar-heading .icon-button{width:42px;height:42px;border:1px solid var(--line);border-radius:4px;background:var(--surface);box-shadow:0 2px 8px #0003}
-.is-collapsed .sidebar-content{display:none}
 @media(max-width:700px){.workspace{padding-right:0}}
-.is-collapsed .sidebar-heading{right:16px;top:16px;height:44px}
-.is-collapsed .sidebar-heading .icon-button{width:44px;height:44px;background:var(--sidebar);border-color:#b6b9bf}
-.is-collapsed .collapse{transform:none}
 #goto-form input[type=number]{appearance:textfield;-moz-appearance:textfield}
 #goto-form input::-webkit-inner-spin-button,#goto-form input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .select-menu[data-open=true]>.select-popup{transition-property:opacity,transform}
@@ -171,7 +187,23 @@ dialog{--border:#c9cec7;--accent:#426846;color:#263128;color-scheme:light}
 #biome-filters{max-height:320px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 #resource-status:empty{display:none}
 .workspace:has(.filter-panel.is-collapsed) .map-status{margin-right:48px}
+/* Clip a fixed-width panel throughout the animation. Never detach its content
+   or move the heading between normal and absolute layout during a transition. */
+.workspace{--filter-width:286px}
+.filter-panel{width:var(--filter-width);border-left:0;box-shadow:inset 1px 0 var(--line)}
+.filter-panel .sidebar-heading,.filter-panel .sidebar-content{width:var(--filter-width);padding-left:1px}
+.filter-panel.is-collapsed{width:0;pointer-events:none}
+.sidebar-reopen{position:absolute;right:16px;top:16px;z-index:4;width:44px;height:44px;color:var(--ink);background:var(--sidebar);border:1px solid #b6b9bf;border-radius:4px;box-shadow:0 2px 8px #0003;opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--motion) var(--ease),visibility 0s var(--motion)}
+.workspace:has(.filter-panel.is-collapsed) .sidebar-reopen{opacity:1;visibility:visible;pointer-events:auto;transition-delay:var(--motion),0s}
+.sidebar-reopen:hover{background:var(--hover)}
+@media(max-width:1350px){.workspace{--filter-width:260px}}
+@media(max-width:1100px){.workspace{--filter-width:244px}}
+@media(max-width:700px){.workspace{--filter-width:min(286px,calc(100vw - 60px))}}
 @media(max-width:700px){#layer-menu .select-popup{left:auto;right:0}}
+@media(max-width:600px){
+ .toolbar .select-menu{position:static}
+ .toolbar .select-menu>.select-popup,.toolbar #layer-menu>.select-popup{top:calc(100% + 8px);left:12px;right:12px;width:auto;min-width:0;max-width:none;max-height:calc(100dvh - 190px)}
+}
 /* Dialogs share the map toolbar and filter panel palette. */
 :is(#settings-dialog,#about-dialog){--accent:#a6bafb;width:560px;padding:0 24px 12px;color:var(--ink);background:var(--sidebar);border:1px solid var(--line);border-radius:6px;box-shadow:0 20px 80px #0008;color-scheme:dark;scrollbar-width:thin;scrollbar-color:#566079 transparent}
 :is(#settings-dialog,#about-dialog)::backdrop{background:#080d1b99}

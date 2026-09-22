@@ -55,9 +55,9 @@ test('visibility, freeze, pagehide and BFCache pageshow suspend/resume exactly o
 });
 
 function mapHarness(t) {
-  const saved=new Map(),rafs=new Map(),transforms=[];let next=0;
+  const saved=new Map(),rafs=new Map(),transforms=[];let next=0,onResize;
   const install=(k,v)=>{saved.set(k,Object.getOwnPropertyDescriptor(globalThis,k));Object.defineProperty(globalThis,k,{configurable:true,writable:true,value:v});};
-  install('ResizeObserver',class {observe(){}});
+  install('ResizeObserver',class {constructor(callback){onResize=callback;}observe(){}});
   install('requestAnimationFrame',fn=>{rafs.set(++next,fn);return next;});
   install('cancelAnimationFrame',id=>rafs.delete(id));
   install('devicePixelRatio',3);
@@ -71,8 +71,30 @@ function mapHarness(t) {
   map.resize();
   const send=(type,id,x,y)=>canvas.dispatchEvent(Object.assign(new Event(type),{pointerId:id,clientX:x,clientY:y}));
   t.after(()=>{clearTimeout(map.viewTimer);for(const [k,d] of saved)d?Object.defineProperty(globalThis,k,d):delete globalThis[k];});
-  return {map,canvas,send,selected,rafs,transforms,viewport};
+  return {map,canvas,send,selected,rafs,transforms,viewport,notifyResize:()=>onResize()};
 }
+
+test('sidebar resizing never clears the presented canvas between drawing frames',t=>{
+  const {map,canvas,notifyResize}=mapHarness(t),events=[];
+  let width=canvas.width,nextWidth=520;
+  Object.defineProperty(canvas,'width',{get:()=>width,set:value=>{width=value;events.push('clear');}});
+  canvas.getBoundingClientRect=()=>({left:0,top:0,width:nextWidth,height:600});
+  map.ensureTiles=()=>events.push('tiles');
+  map.draw=()=>events.push('paint');
+  const originalWidth=width;
+  notifyResize();nextWidth=600;notifyResize();
+  assert.equal(width,originalWidth,'ResizeObserver must preserve the previous painted frame');
+  assert.deepEqual(events,[]);
+  map.frame(16);
+  assert.deepEqual(events,['clear','tiles','paint']);
+  assert.equal(map.width,600,'rapid layout changes coalesce to the latest size');
+  events.length=0;map.frame(32);
+  assert.deepEqual(events,[],'unchanged layout does not clear or redraw');
+  map.suspended=true;nextWidth=700;notifyResize();map.frame(48);
+  assert.deepEqual(events,[],'background pages retain deferred resizing');
+  map.suspended=false;map.frame(64);
+  assert.deepEqual(events,['clear','tiles','paint']);
+});
 
 test('pinch to one finger remains continuous, cannot generate a tap, and ignores a third finger',t=>{
   const {map,send,selected}=mapHarness(t);

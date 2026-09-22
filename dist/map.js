@@ -57,7 +57,10 @@ export class MapView {
     this.width = 0;
     this.height = 0;
     this.lastFrame = 0;
-    new ResizeObserver(() => this.resize()).observe(canvas);
+    // ResizeObserver runs after animation callbacks, immediately before paint.
+    // Clearing the backing canvas here would expose an empty frame. Resize in
+    // the next drawing callback instead, immediately before repainting it.
+    new ResizeObserver(() => { this.resizePending = true; this.changed(); }).observe(canvas);
     canvas.addEventListener(
       "wheel",
       (e) => {
@@ -526,6 +529,7 @@ export class MapView {
   }
   frame(time) {
     if(this.suspended)return;
+    if(this.resizePending){this.resizePending=false;this.resize();}
     const dt = Math.min(3, (time - this.lastFrame) / 16.667 || 1);
     this.lastFrame = time;
     if (Math.abs(this.scale - this.targetScale) > 1e-7) {

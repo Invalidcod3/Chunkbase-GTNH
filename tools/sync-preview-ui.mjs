@@ -7,7 +7,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const source=path.join(root,'dist'),target=path.join(root,'private-packs/rwg-local-preview');
 await stat(path.join(target,'build-info.json'));
 const files=['app.js','index.html','style.css','theme.css','theme-ui.js','preferences.js','biome-selection.js','map.js','gpu-biome-renderer.js','resource-icons.js','resource-view.js','resource-names.js','engine/resources.js','start-local.mjs','NOTICE.md'];
-files.push('structure-filters.js','engine/catalog.js');
+files.push('structure-filters.js','engine/catalog.js','engine/biome-registry.js');
 for(const name of await readdir(path.join(source,'assets/ui')))files.push('assets/ui/'+name);
 for(const name of await readdir(path.join(source,'assets/resources')))files.push('assets/resources/'+name);
 for(const name of await readdir(path.join(source,'i18n')))files.push('i18n/'+name);

@@ -1,4 +1,10 @@
 const RESOURCE_KEY = /^[a-z0-9_.-]+:[a-z0-9_./-]+$/;
+// Shared display colors for the map, filters and exports; worldgen is unchanged.
+const DISPLAY_COLORS = {
+  'biomesoplenty:shield': '#214e3a',
+  'biomesoplenty:lush_swamp': '#39998b',
+  'biomesoplenty:bayou': '#68b02d',
+};
 export function assertResourceKey(key) {
   if (
     typeof key !== "string" ||
@@ -41,7 +47,7 @@ export class BiomeRegistry {
     });
     if (new Set(aliases).size !== aliases.length)
       throw new Error("重复旧版生物群系映射");
-    const record = { ...entry, index: this.indices.length };
+    const record = { ...entry, color: DISPLAY_COLORS[key] || entry.color, index: this.indices.length };
     this.entries.set(key, record);
     this.indices.push(record);
     for (const alias of aliases) this.legacy.set(alias, key);

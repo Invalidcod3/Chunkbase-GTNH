@@ -128,18 +128,24 @@ export function createThemeUI({view, getState, onResourceChange, onBiomeChange, 
   const $ = id => document.getElementById(id);
   const dimensionMenu = createIconSelect($('dimension-menu'),$('dimension'),value=>({src:dimensionIcons[value] ? `${iconRoot}dimension-${dimensionIcons[value]}.png` : `${iconRoot}stone.png`}));
   const layerMenu = createIconSelect($('layer-menu'),$('marker-mode'),value=>({src:iconRoot+(layerIcons[value] || 'map-pin.svg'),symbolic:true}));
-  const panel = $('filter-panel'), content = $('sidebar-content'), toggle = $('sidebar-toggle');
+  const panel = $('filter-panel'), toggle = $('sidebar-toggle'), reopen = $('sidebar-reopen');
   let lang = 'zh', editing = null, scope = '', resourceSignature = '';
   const exclusions = new Map();
   function collapse(value) {
-    if(value && content.contains(document.activeElement))toggle.focus();
-    panel.classList.toggle('is-collapsed',value); content.inert = value;
+    const moveFocus=value ? panel.contains(document.activeElement) : document.activeElement===reopen;
+    panel.classList.toggle('is-collapsed',value); panel.inert = value;
+    reopen.inert=!value;reopen.tabIndex=value?0:-1;
+    reopen.setAttribute('aria-hidden',String(!value));
+    reopen.title=lang==='zh'?'展开筛选面板':'Expand filters';
+    reopen.setAttribute('aria-label',reopen.title);
     toggle.setAttribute('aria-expanded',String(!value));
     toggle.title = lang==='zh' ? (value?'展开筛选面板':'收起筛选面板') : (value?'Expand filters':'Collapse filters');
     toggle.setAttribute('aria-label',toggle.title);
+    if(moveFocus)(value?reopen:toggle).focus({preventScroll:true});
   }
   collapse(matchMedia('(max-width:700px)').matches);
   toggle.onclick = () => collapse(!panel.classList.contains('is-collapsed'));
+  reopen.onclick = () => collapse(false);
   for (const button of document.querySelectorAll('.section-toggle')) {
     const body = $(button.getAttribute('aria-controls'));
     button.onclick = () => {
