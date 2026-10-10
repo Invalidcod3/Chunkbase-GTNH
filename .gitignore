@@ -12,3 +12,8 @@ node_modules/
 .env.*
 !.env.example
 runtime/
+
+# Local hosting, workflow and deployment configuration (not published as source).
+/.openai/
+/.github/
+/deploy/

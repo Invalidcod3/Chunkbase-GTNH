@@ -117,6 +117,37 @@
       </aside>
     </div>
     <div id="toast" role="status" hidden></div>
+    <dialog id="notice-dialog" aria-labelledby="notice-title">
+      <div class="dialog-heading">
+        <h2 id="notice-title" data-i18n="noticeTitle" tabindex="-1" autofocus>使用须知</h2>
+      </div>
+      <p data-i18n="noticeIntro">本工具通过部分重放种子的生成算法来预测点位。完整重放地图的生成步骤需要更复杂的运算，会明显增加等待时间。为兼顾预测速度与使用体验，工具省略了部分依赖实际方块环境的检查，因此坐标可能与游戏中的结果不同。</p>
+      <p><span data-i18n="noticeGenerationBefore">此外，Minecraft 1.7.10 中的部分模组结构会检查树木、砂砾等地物生成后的实际方块环境。而</span><a href="https://zh.minecraft.wiki/w/%E4%B8%96%E7%95%8C%E7%94%9F%E6%88%90#%E5%9C%B0%E7%89%A9%E4%B8%8E%E7%BB%93%E6%9E%84%E6%94%BE%E7%BD%AE" target="_blank" rel="noreferrer" data-i18n="noticeDecoration">地物生成</a><span data-i18n="noticeGenerationAfter">会跨区块，所以区块生成顺序不同，会导致地物分布不同。矿脉也可能因最先参与判定的区块不同而采用不同候选。因此，即使种子相同，实际生成结果仍可能不同。示意如下：</span></p>
+      <figure class="notice-figure">
+        <div id="notice-diagram"></div>
+      </figure>
+      <section aria-labelledby="notice-known-title">
+        <h3 id="notice-known-title" data-i18n="noticeKnownTitle">已收到不一致反馈的点位</h3>
+        <p data-i18n="noticeKnownIntro">以下几类点位已有用户反馈与实际结果不一致，建议至少选取 2～3 个同类坐标作为备选。</p>
+        <ul>
+          <li data-i18n="noticeVillage">村庄：已修正 Village Names 的间距、群系筛选和原点排除半径。图标表示候选起始区块；建筑组装可能失败，修改模组版本或生成配置也可能使预测不适用。</li>
+          <li data-i18n="noticeRoguelike">冒险地牢（Roguelike）：地图会重放选址、群系和入口类型，但不预生成入口周围的方块。陡坡、洞穴或水体会使游戏改试其他位置或放弃生成。</li>
+          <li data-i18n="noticeOres">矿脉：普通矿脉只重放首次抽选；实际放置还受高度、地形、岩石种类及失败重试影响，图标不代表该处一定存在该矿脉。靠近地表时，尤其需要核对地形和矿脉高度。</li>
+          <li data-i18n="noticeDungeon">原版刷怪笼地牢：实际点位附近的环境不满足生成条件时，地牢可能不会生成。</li>
+        </ul>
+      </section>
+      <section aria-labelledby="notice-other-title">
+        <h3 id="notice-other-title" data-i18n="noticeOtherTitle">暂未收到不一致反馈的点位</h3>
+        <p data-i18n="noticeOtherIntro">以下几类点位暂未收到不一致报告，但仍需要留意实际生成结果。</p>
+        <ul>
+          <li data-i18n="noticeOtherStructures">矿井、LootGames、AE2 陨石、下界尖塔、灵气节点、祭坛及部分太空结构，多数情况下可用，仍需游戏内核验。其他生成步骤或环境因素仍可能使目标未出现。</li>
+          <li data-i18n="noticeApproximate">要塞是未重放最终群系调整的预期坐标；史莱姆岛图标只是近似中心；按种子预测的出生点是估算值。它们都不宜当作实际方块坐标。</li>
+        </ul>
+      </section>
+      <p data-i18n="noticeConclusion">网页预测多数情况下可用，仍需游戏内核验。仅凭种子难以还原已有世界的全部生成历史与方块状态。</p>
+      <p><span data-i18n="noticeDesktopBefore">如需更深入的种子核验，可使用 </span><a href="https://github.com/Invalidcod3/Amidst-GTNH" target="_blank" rel="noreferrer">Amidst-GTNH</a><span data-i18n="noticeDesktopAfter">。它支持批量导出坐标至旅行地图；连接同种子的游戏世界时，还可读取 Visual Prospecting 的已记录矿脉和已加载区块的群系数据，辅助核验。其他结构仍可能是预测候选。</span></p>
+      <form method="dialog" class="notice-actions"><button value="close" data-i18n="noticeContinue">知道了，进入地图</button></form>
+    </dialog>
     <dialog id="settings-dialog" aria-labelledby="settings-title">
       <form method="dialog" class="dialog-heading">
         <h2 id="settings-title" data-i18n="settings">设置</h2>
@@ -247,6 +278,7 @@
       <p data-i18n="disclaimer">
         非官方种子预览工具。预测不保证实际生成结果；模组名称及素材归各自权利人所有。
       </p>
+      <p><a id="notice-open" href="#notice-dialog" data-i18n="noticeReopen">查看使用须知与坐标准确性说明</a></p>
       <p>
         <a
           href="https://github.com/Invalidcod3/Chunkbase-GTNH"

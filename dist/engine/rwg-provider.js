@@ -5,6 +5,7 @@ import { surfaceStructures, validateSurfaceProfile } from "./surface-structures.
 import { createDungeonPredictor } from "./dungeons.js";
 import {unavailableSpawn} from './navigation.js';
 import {createSpawnPredictor} from './spawn.js';
+import {validateVillageRules} from './village-rules.js';
 
 // The site installs a calibrated engine and its environment-specific palette.
 // Calls are serialized by engine/worker.js; the engine owns mutable Java state.
@@ -26,6 +27,20 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
   const rasters = new Map();
   let rasterBytes = 0;
   const surfaceProfile = options.surfaceProfile ? validateSurfaceProfile(options.surfaceProfile) : null;
+  const villageRules = validateVillageRules(options.villageProfile);
+  const villageBiomes = new Set(villageRules.biomeNames);
+  function villageViable(x, z) {
+    if (villageRules.algorithm === 'rwg') {
+      if (typeof engine.villageViable !== 'function') throw new Error('RWG 函数包尚未提供村庄地形检查');
+      return engine.villageViable(x, z);
+    }
+    if (!villageBiomes.size) return false;
+    const cx = Math.floor(x / 16), cz = Math.floor(z / 16);
+    const id = rawChunk(cx, cz)[(z - cz * 16) * 16 + x - cx * 16];
+    const name = villageRules.biomeNamesById?.[id];
+    if (typeof name !== 'string') throw new Error('Village Names 缺少实际群系名称：' + id);
+    return villageBiomes.has(name);
+  }
   const dungeons=options.caveEngine?createDungeonPredictor(options.caveEngine,options.dungeonProfile,(x,z)=>engine.rawHeight(x,z),{yieldTask,now}):null;
   function rawChunk(cx,cz) {
     const key=`${cx}:${cz}`;
@@ -61,16 +76,15 @@ export function createRwgProvider(engine, profile, keys, options = {}) {
     async predictStructures(q, { signal } = {}) {
       checkSignal(signal);
       configure(parseSeed(q.seed).toString());
-      if(typeof engine.villageViable !== "function") throw new Error("RWG 函数包尚未提供村庄地形检查");
       const dungeonOnly=q.structureGroup==='dungeons';
-      const result=dungeonOnly?[]:await rwgStructures(q, (x,z) => engine.villageViable(x,z), {signal,yieldTask});
+      const result=dungeonOnly?[]:await rwgStructures(q, villageViable, {signal,yieldTask,villageRules});
       if(surfaceProfile&&!dungeonOnly) result.push(...await surfaceStructures(q,(x,z)=>{
         const cx=Math.floor(x/16),cz=Math.floor(z/16);
         return rawChunk(cx,cz)[(z-cz*16)*16+x-cx*16];
       },surfaceProfile,{signal,yieldTask,now}));
       if(dungeons&&!q.excludedKinds?.includes('VANILLA_SPAWNER_DUNGEON')) {
         const b=q.bounds,margin=144;
-        const nearby=await rwgStructures({...q,bounds:{minX:Math.max(-30000000,b.minX-margin),minZ:Math.max(-30000000,b.minZ-margin),maxX:Math.min(30000000,b.maxX+margin),maxZ:Math.min(30000000,b.maxZ+margin)}},(x,z)=>engine.villageViable(x,z),{signal,yieldTask});
+        const nearby=await rwgStructures({...q,bounds:{minX:Math.max(-30000000,b.minX-margin),minZ:Math.max(-30000000,b.minZ-margin),maxX:Math.min(30000000,b.maxX+margin),maxZ:Math.min(30000000,b.maxZ+margin)}},villageViable,{signal,yieldTask,villageRules});
         result.push(...await dungeons(q,nearby,{signal}));
       }
       if(options.spawnProfile&&!dungeonOnly&&!q.excludedKinds?.includes('WORLD_SPAWN')){

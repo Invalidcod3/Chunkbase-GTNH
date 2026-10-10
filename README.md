@@ -61,7 +61,7 @@ node tools/build-release.mjs --runtime-dir private-packs/rwg-local-preview
 | `dist/` | 手工维护的网页源码、引擎和界面素材，不是可删除的构建缓存 |
 | `tests/` | 可独立运行的 Node.js 回归测试与固定参考数据 |
 | `tools/` | 构建、验证、采集和素材导入工具；采集工具的外部依赖见对应文档 |
-| `deploy/cloudflare/` | Cloudflare 响应头和 404 页面 |
+| `tools/release-assets.mjs` | 打包时生成 Cloudflare 响应头和 404 页面 |
 | `docs/` | 架构、功能、验证与历史开发记录 |
 | `runtime/` | 完整源码发布附件中附带的已编译浏览器函数及必要环境数据 |
 

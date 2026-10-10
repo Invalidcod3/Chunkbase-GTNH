@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {zipStore} from '../dist/export.js';
+import {writeReleaseAssets} from './release-assets.mjs';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const args=process.argv.slice(2);
@@ -14,6 +15,10 @@ const runtime=path.resolve(root,args[1]||'runtime');
 const out=path.join(root,'artifacts');
 const pkg=JSON.parse(await readFile(path.join(root,'package.json'),'utf8'));
 const runtimeInfo=JSON.parse(await readFile(path.join(runtime,'build-info.json'),'utf8'));
+const villageProfile=JSON.parse(await readFile(path.join(root,'dist/data/village-profile.json'),'utf8'));
+const rwgProvider=await readFile(path.join(runtime,'packs/rwg/provider.js'),'utf8');
+if(!rwgProvider.includes('villageProfile')||!rwgProvider.includes('../../data/village-profile.json'))
+  throw new Error('Rebuild the runtime provider with the current Village Names profile before packaging.');
 if(!runtimeInfo.environmentId||!runtimeInfo.options?.space||!runtimeInfo.options?.resources)
   throw new Error('A complete calibrated runtime is required; use --runtime-dir private-packs/rwg-local-preview in the maintainer workspace.');
 
@@ -44,7 +49,7 @@ await mkdir(out,{recursive:true});
 const stage=await mkdtemp(path.join(out,'release-build-'));
 const source=path.join(stage,'source'),web=path.join(stage,'cloudflare');
 await mkdir(source,{recursive:true});await mkdir(web,{recursive:true});
-for(const name of ['dist','docs','tests','tools','deploy','.github'])await copyTree(path.join(root,name),path.join(source,name));
+for(const name of ['dist','docs','tests','tools'])await copyTree(path.join(root,name),path.join(source,name));
 for(const name of ['README.md','LICENSE','.gitignore','.gitattributes','package.json','reference-lock.json'])await copy(root,name,source);
 
 // Only the already-built browser payload is carried into the source archive.
@@ -55,8 +60,9 @@ await copyTree(path.join(runtime,'packs'),path.join(payload,'packs'));
 for(const name of ['environment.json','build-info.json','display-revision.json','cpu-optimization.json'])await copy(runtime,name,payload);
 await copyTree(path.join(root,'dist'),web);
 await copyTree(payload,web);
-await copyTree(path.join(root,'deploy/cloudflare'),web);
+await writeReleaseAssets(web);
 const info={...runtimeInfo,type:'calibrated-static',environment:'GTNH 2.9.0-beta-3',version:pkg.version,sourceRepository:'https://github.com/Invalidcod3/Chunkbase-GTNH'};
+info.villagePrediction={revision:'vn-2026-10-10',algorithm:villageProfile.algorithm,configCommit:villageProfile.provenance.configCommit,scope:'candidate selection; native JAR controlled comparison; building assembly not replayed'};
 await writeFile(path.join(web,'build-info.json'),JSON.stringify(info,null,2)+'\n');
 // CLI launchers belong in the source/local package, not the hosted assets.
 const excludedHosted=new Set(['Start.cmd','start-local.mjs','HOW-TO-RUN.txt']);

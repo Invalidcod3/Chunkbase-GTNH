@@ -17,6 +17,7 @@
 - [坐标网格](coordinate-grid.md)
 - [扩展维度](extra-dimensions.md)
 - [出生点](spawn-sync.md)
+- [村庄预测](village-prediction.md)
 - [暮色与刷怪笼](twilight-and-dungeons.md)
 
 ## 历史记录

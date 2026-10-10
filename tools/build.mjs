@@ -35,7 +35,7 @@ console.log(
   `Packaged ${files.length} files (${Math.round(buffer.length / 1024)} KiB): artifacts/amidst-gtnh-web-static.zip`,
 );
 const sourceFiles = [];
-for (const name of ["dist", "docs", "tests", "tools", "deploy", ".github"])
+for (const name of ["dist", "docs", "tests", "tools"])
   for (const entry of await collect(path.join(root, name), name + "/"))
     if (!entry[0].includes("__pycache__/") && !entry[0].endsWith(".pyc"))
       sourceFiles.push(entry);

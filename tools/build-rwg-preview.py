@@ -162,8 +162,10 @@ def build(resources=False,surface=False,asteroids=False,twilight=False,dungeons=
         (installed/'spawn-provenance.json').write_text(json.dumps(spawn_report,indent=2),'utf-8')
         surface_load+='const spawnResponse=await fetch(new URL("./spawn-profile.json",import.meta.url));\nif(!spawnResponse.ok)throw new Error("Cannot load spawn profile");\nconst spawnProfile=await spawnResponse.json();\n'
         surface_options=surface_options[:-1]+(',' if surface_options!='{}' else '')+'spawnProfile,loadSpawnEngine:()=>import("../spawn/selection.js")}'
+    surface_load+="const villageResponse=await fetch(new URL(\"../../data/village-profile.json\",import.meta.url));\nif(!villageResponse.ok)throw new Error(\"Cannot load village profile\");\nconst villageProfile=await villageResponse.json();\n"
+    surface_options='{villageProfile'+(',' if surface_options!='{}' else '')+surface_options[1:]
     (installed/'provider.js').write_text('import * as engine from "./selection.js";\nimport {createRwgProvider} from "../../engine/rwg-provider.js";\n'+surface_load+'export const provider=createRwgProvider(engine,'+json.dumps(config)+','+json.dumps(keys)+','+surface_options+');\n','utf-8')
-    note='RWG + BOP 底图已校准；村庄及已接入模组结构通过实例样本对照。未包含存档修改。' if live_structures else 'RWG + BOP 底图已校准；村庄候选通过原 Java 离线对照，待实例复核。未包含存档修改。'
+    note='RWG + BOP 底图已校准；Village Names 村庄按版本配置预测候选，选点已通过原生 JAR 受控对照，仍需游戏内核验。未包含存档修改。'
     descriptor={'id':'local-rwg-calibrated','apiVersion':1,'browserExecutable':True,'entry':'./rwg/provider.js',
                 'dimensions':[{'key':'overworld','capabilities':['biomes','structures'],'note':note}], 'biomes':biomes}
     packs=[descriptor]

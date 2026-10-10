@@ -13,7 +13,7 @@
 
 ## GitHub
 
-仓库保留 `dist/`、`tests/`、`tools/`、`docs/`、`deploy/`、`.github/`、README、LICENSE 和包元数据。不要提交 `artifacts/`、`private-packs/`、运行凭据或游戏实例。`.github/workflows/ci.yml` 在 Node.js 22/24 上检查、测试和构建基础包。
+仓库保留 `dist/`、`tests/`、`tools/`、`docs/`、README、LICENSE 和包元数据。不要提交 `.openai/`、`.github/`、`deploy/`、`artifacts/`、`private-packs/`、运行凭据或游戏实例。前三个目录也不收录进源码 ZIP；本地副本可保留。Cloudflare 响应头和 404 页面由 `tools/release-assets.mjs` 在打包时生成，构建不依赖本地部署目录。GitHub Actions 工作流不再随仓库发布。
 
 以 `v0.1.0` 创建版本发布，附上：
 

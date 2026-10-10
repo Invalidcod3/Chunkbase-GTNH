@@ -1,5 +1,6 @@
 import { MapView } from "./map.js";
 import {createThemeUI} from './theme-ui.js';
+import {createNoticeDiagram} from './notice-diagram.js';
 import {BiomeSelection} from './biome-selection.js';
 import {depositIcon} from './resource-icons.js';
 import {resourceName,localizeResourceText} from './resource-names.js';
@@ -102,6 +103,26 @@ const english = {
   aboutTitle: "Sources and support",
   disclaimer:
     "Unofficial seed preview. Predictions may differ from generated worlds. Mod names and assets belong to their respective owners.",
+  noticeTitle: "Usage notes",
+  noticeIntro: "This tool predicts locations by replaying part of the seed's generation algorithms. Replaying every world-generation step would require more computation and substantially longer waits. To balance speed and usability, some checks that depend on actual blocks are omitted, so predictions may differ from the game.",
+  noticeGenerationBefore: "In Minecraft 1.7.10 modded generation, some structures check the blocks present after features such as trees and gravel have been placed. Because ",
+  noticeDecoration: "terrain decoration",
+  noticeGenerationAfter: " crosses chunk boundaries, changing the chunk generation order can change the distribution of features. Ore veins may also select different candidates depending on which chunk is checked first. The same seed can therefore produce different results, as illustrated below.",
+  noticeKnownTitle: "Locations with reported differences",
+  noticeKnownIntro: "Users have reported differences for these types. Select at least 2–3 locations of the same type as alternatives.",
+  noticeVillage: "Villages: Village Names spacing, biome filtering and the village-free origin radius have been corrected. Icons mark candidate starting chunks; building assembly can still fail, and different mod versions or generation settings may require a different prediction profile.",
+  noticeRoguelike: "Roguelike dungeons: The map replays site, biome and entrance selection, but does not generate the blocks around an entrance. Steep ground, caves or water can make the game try another site or skip it.",
+  noticeOres: "Ore veins: Ordinary veins replay only the first choice. Actual placement also depends on height, terrain, stone type and retries after failure; an icon does not guarantee that vein exists there. Near the surface, pay particular attention to terrain and vein height.",
+  noticeDungeon: "Vanilla spawner dungeons: A dungeon may not generate if its surrounding blocks do not meet the placement conditions.",
+  noticeOtherTitle: "Locations without reported differences so far",
+  noticeOtherIntro: "No differences have been reported for the following types so far, but their actual generation still needs checking.",
+  noticeOtherStructures: "Mineshafts, LootGames dungeons, AE2 meteorites, Nether spires, aura nodes, altars and some space structures are generally useful predictions, but still need verification in game. Other generation steps or environmental conditions may prevent a target from appearing.",
+  noticeApproximate: "Strongholds use expected coordinates without the final biome adjustment; slime island icons mark approximate centres; seed-predicted world spawn is estimated. None is an exact block location.",
+  noticeConclusion: "The web predictions are generally useful, but still need verification in game. A seed alone cannot fully reconstruct the generation history and block state of an existing world.",
+  noticeDesktopBefore: "For more detailed checks, use ",
+  noticeDesktopAfter: ". It supports bulk coordinate export to JourneyMap. When connected to a game world with the same seed, it can also read Visual Prospecting's recorded veins and biome data from loaded chunks to help verify predictions. Other structures may still be candidates.",
+  noticeContinue: "Got it, open map",
+  noticeReopen: "Read usage and coordinate notes",
   contact: "Source repository",
   creditsTitle: "Credits",
   creditsRole: "Contribution",
@@ -125,6 +146,7 @@ const chinese = new Map(
   ]),
 );
 english.exportBiomes = "Biome JSON";
+const noticeDiagram = createNoticeDiagram($("notice-diagram"), () => language);
 function toast(message) {
   $("toast").textContent = message;
   $("toast").hidden = false;
@@ -240,6 +262,7 @@ function applyLanguage() {
       language === "en"
         ? english[el.dataset.i18n]
         : chinese.get(el.dataset.i18n);
+  noticeDiagram.refresh();
   $("dimension").replaceChildren(
     ...dimensions.map((d) => {
       const o = new Option(d[language], d.key);
@@ -775,6 +798,15 @@ $("copy-coordinates").onclick = async () => {
 };
 for (const name of ["settings", "export", "about"])
   $(name + "-open").onclick = () => $(name + "-dialog").showModal();
+const noticeSeenKey = "amidst-notice-seen";
+$("notice-dialog").addEventListener("close", () => {
+  try { localStorage.setItem(noticeSeenKey, "true"); } catch {}
+});
+$("notice-open").onclick = (event) => {
+  event.preventDefault();
+  $("about-dialog").close();
+  $("notice-dialog").showModal();
+};
 for (const dialog of document.querySelectorAll("dialog"))
   dialog.addEventListener("click", (e) => {
     if (e.target === dialog) {
@@ -1095,6 +1127,9 @@ try{
   const response=await fetch(new URL('./build-info.json',import.meta.url));
   if(response.ok){const info=await response.json();const label=info.type==='calibrated-static'?'完整校准包':info.type==='private-calibrated'?'本地校准包':'基础静态包';$('package-info').textContent=`${info.environment} · ${label}${info.environmentId?' · '+info.environmentId.slice(0,12):''}`;}
 }catch{}
+let noticeSeen = false;
+try { noticeSeen = localStorage.getItem(noticeSeenKey) === "true"; } catch {}
+if (!noticeSeen) $("notice-dialog").showModal();
 if (document.modelContext?.registerTool) {
   const lifecycle = new AbortController();
   window.addEventListener("pagehide", () => lifecycle.abort(), { once: true });
